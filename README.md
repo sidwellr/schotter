@@ -1,4 +1,4 @@
-# Schotter Five Ways
+# Schotter Four Ways
 
 *Schotter* (German for gravel) is a piece by computer art pioneer Georg Nees. It consists of a grid of squares 12 across and 22 down with random rotation and displacement that increases towards the bottom.
 
@@ -16,7 +16,17 @@ Other generative artists have taken inspiration from this work. One I particular
 
 *Schotter* is fairly simple to code; at least it is today with modern graphics libraries. Several other people have written tutorials for how to code this using various platforms. I'm adding to this collection with a series of tutorials for coding it in Rust using the Nannou library.
 
+We'll be coding *Schotter* four different ways:
 
+[Schotter1](schotter1.md): Using the Nannou "sketch" facility to code a simple version with no frills.
+
+Schotter2: Changing the code to a Nannou "app" with persistent data and some simple keyboard commands to adjust some parameters.
+
+Schotter3: Adding a control panel to make it easier to adjust parameters on the fly.
+
+Schotter4: Animating the squares, so they move from the starting grid to their displaced positions, and from their to new positions.
+
+I may add some variations later; after all, that's what creative coding is all about! But this is the initial plan.
 
 
 ## Notes
@@ -44,3 +54,13 @@ Then I created four files:
 * README.md (this file), with initial text.
 
 Finally, I did my initial commit.
+
+To create schotter1, I did the following:
+* add "schotter1", to the main Cargo.toml file, in "members".
+* run "cargo new schotter1"
+* in schotter1/Cargo.toml, added 'nannou = "0.16"' as a dependency (run "cargo search nannou" to determine latest version)
+* copied the contents of the Nannou template template_sketch.rs (https://github.com/nannou-org/nannou/blob/master/examples/templates/template_sketch.rs) to schotter1/src/main.rs (replacing default hello world code)
+* did initial compile with "cargo run --release -p schotter1" (took several minutes to complete)
+* created schotter1.md to contain the first tutorial
+
+Creation of subsequent versions will be similar, but copying the initial code from the previous version instead of the Nannou template.

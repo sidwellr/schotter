@@ -28,7 +28,7 @@ nannou = "0.16.0"             # A Creative Coding Framework for Rust.
 
 So just add the line ```nannou = "0.16.0"``` to the end of schotter1/Cargo.toml (after ```[dependencies]```). Other libraries can be added here if needed, but we won't for this project.
 
-The "cargo new" command created a simple Rust program in the file main.rs in the src directory. We now need to replace that with a Nannou starting point. Since we're starting from scratch here, let's use one of the Nannou templates from https://github.com/nannou-org/nannou/tree/master/examples/templates. There are two kinds of Nannou projects: sketches and apps. Sketches can't track application state or use some of the advanced Nannou features, but are much simpler so we'll start there. (Apps are more flexible and allow more control; we'll convert to the app model later in this series.)
+The "cargo new" command created a simple Rust program in the file main.rs in the src directory. We now need to replace that with a Nannou starting point. Since we're starting from scratch here, let's use one of the Nannou templates from https://github.com/nannou-org/nannou/tree/master/examples/templates. There are two kinds of Nannou projects: sketches and apps. Sketches can't track application state or use some of the advanced Nannou features, but are much simpler so we'll start there. (Apps are more flexible and allow more control; we'll convert to the app model in the next version, schotter2.)
 
 The template for a new Nannou sketch is ```template_sketch.rs```. Click that file name and copy the Rust code. Then open main.rs, delete the simple Rust program that cargo put there, and paste in the sketch template code. It looks like this:
 

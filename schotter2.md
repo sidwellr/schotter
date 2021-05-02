@@ -233,6 +233,96 @@ Key::Left => {
 }
 ```
 
+We should make one more change: We don't currently keep any information about the states of the squares between iterations. This is fine since we regenerate the squares from scratch on each iteration. But the Nannou App paradigm supports keeping state information in the model, and doing this will make it easier to make future changes, especially adding animation. The initial state is created in the model() function along with other setup, and on each iteration the update() function is called to update the state before calling the view() function to display it.
+
+The first thing we need to do is create a struct to hold information about individual squares. Since Schotter means "gravel", we'll call this struct Stone, and we'll include a new() function for it:
+
+```
+struct Stone {
+    x: f32,
+    y: f32,
+    x_offset: f32,
+    y_offset: f32,
+    rotation: f32,
+}
+
+impl Stone {
+    fn new(x: f32, y: f32) -> Self {
+        let x_offset = 0.0;
+        let y_offset = 0.0;
+        let rotation = 0.0;
+        Stone {
+            x,
+            y,
+            x_offset,
+            y_offset,
+            rotation,
+        }
+    }
+}
+```
+
+In our Model struct, we add a vector of Stones, named gravel:
+
+```
+struct Model {
+    random_seed: u64,
+    disp_adj: f32,
+    rot_adj: f32,
+    gravel: Vec<Stone>
+}
+```
+
+We then add code to the model() function to create the initial stones. This will replace the nested for loops in view().:
+
+```
+let mut gravel = Vec::new();
+for y in 0..ROWS {
+    for x in 0..COLS {
+        let stone = Stone::new(x as f32, y as f32);
+        gravel.push(stone)
+    }
+}
+
+Model {
+    random_seed,
+    disp_adj,
+    rot_adj,
+    gravel,
+}
+```
+
+The update() function now has some work to do! Instead of nested loops for x and y, we just iterate through the model.gravel vector which contains the state of each square and set the offset and rotation variables using code adapted from the view() function:
+
+```
+fn update(_app: &App, model: &mut Model, _update: Update) {
+    let mut rng = StdRng::seed_from_u64(model.random_seed);
+    for stone in &mut model.gravel {
+        let factor = stone.y / ROWS as f32;
+        let disp_factor = factor * model.disp_adj;
+        let rot_factor = factor * model.rot_adj;
+        stone.x_offset = disp_factor * rng.gen_range(-0.5, 0.5);
+        stone.y_offset = disp_factor * rng.gen_range(-0.5, 0.5);
+        stone.rotation = rot_factor * rng.gen_range(-PI / 4.0, PI / 4.0);
+    }
+}
+```
+
+Finally, we edit the view() function to remove the code that was move elsewhere, keeping only the rect() call that draws the squares inside a new for loop that iterates through the model.gravel vector.
+
+```
+for stone in &model.gravel {
+    gdraw.rect()
+        .no_fill()
+        .stroke(BLACK)
+        .stroke_weight(LINE_WIDTH)
+        .w_h(1.0, 1.0)
+        .x_y(stone.x + stone.x_offset, stone.y + stone.y_offset)
+        .rotate(stone.rotation)
+        ;
+}
+```
+
 That's all we'll do for this program. Now that you know the pattern for adding new functionality, add your own! Here's an output I got by decreasing the rotation adjustment to 0 (no rotation) and increasing the displacement adjustment:
 
 ![](images/schotter2.png)

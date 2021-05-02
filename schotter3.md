@@ -162,6 +162,7 @@ But ui_event() needs the model as one of its parameters. So rather than building
       random_seed,
       disp_adj,
       rot_adj,
+      gravel,
   };
 
   // Send a fake ui_event to draw widgets

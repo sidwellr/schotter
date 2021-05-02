@@ -28,6 +28,29 @@ widget_ids! {
     }
 }
 
+struct Stone {
+    x: f32,
+    y: f32,
+    x_offset: f32,
+    y_offset: f32,
+    rotation: f32,
+}
+
+impl Stone {
+    fn new(x: f32, y: f32) -> Self {
+        let x_offset = 0.0;
+        let y_offset = 0.0;
+        let rotation = 0.0;
+        Stone {
+            x,
+            y,
+            x_offset,
+            y_offset,
+            rotation,
+        }
+    }
+}
+
 struct Model {
     ui: Ui,
     ids: Ids,
@@ -35,6 +58,7 @@ struct Model {
     random_seed: u64,
     disp_adj: f32,
     rot_adj: f32,
+    gravel: Vec<Stone>
 }
 
 fn model(app: &App) -> Model {
@@ -68,6 +92,14 @@ fn model(app: &App) -> Model {
     let disp_adj = 1.0;
     let rot_adj = 1.0;
 
+    let mut gravel = Vec::new();
+    for y in 0..ROWS {
+        for x in 0..COLS {
+            let stone = Stone::new(x as f32, y as f32);
+            gravel.push(stone)
+        }
+    }
+
     let mut the_model = Model {
         ui,
         ids,
@@ -75,6 +107,7 @@ fn model(app: &App) -> Model {
         random_seed,
         disp_adj,
         rot_adj,
+        gravel,
     };
 
     // Send a fake ui_event to draw widgets
@@ -83,7 +116,17 @@ fn model(app: &App) -> Model {
     the_model
 }
 
-fn update(_app: &App, _model: &mut Model, _update: Update) {}
+fn update(_app: &App, model: &mut Model, _update: Update) {
+    let mut rng = StdRng::seed_from_u64(model.random_seed);
+    for stone in &mut model.gravel {
+        let factor = stone.y / ROWS as f32;
+        let disp_factor = factor * model.disp_adj;
+        let rot_factor = factor * model.rot_adj;
+        stone.x_offset = disp_factor * rng.gen_range(-0.5, 0.5);
+        stone.y_offset = disp_factor * rng.gen_range(-0.5, 0.5);
+        stone.rotation = rot_factor * rng.gen_range(-PI / 4.0, PI / 4.0);
+    }
+}
 
 fn view(app: &App, model: &Model, frame: Frame) {
     let draw = app.draw();
@@ -91,27 +134,17 @@ fn view(app: &App, model: &Model, frame: Frame) {
                     .scale_y(-1.0)
                     .x_y(COLS as f32 / -2.0 + 0.5, ROWS as f32 / -2.0 + 0.5);
 
-    let mut rng = StdRng::seed_from_u64(model.random_seed);
-
     draw.background().color(SNOW);
 
-    for y in 0..ROWS {
-        for x in 0..COLS {
-            let factor = y as f32 / ROWS as f32;
-            let disp_factor = factor * model.disp_adj;
-            let rot_factor = factor * model.rot_adj;
-            let x_offset = disp_factor * rng.gen_range(-0.5, 0.5);
-            let y_offset = disp_factor * rng.gen_range(-0.5, 0.5);
-            let rotation = rot_factor * rng.gen_range(-PI / 4.0, PI / 4.0);
-            gdraw.rect()
-                .no_fill()
-                .stroke(BLACK)
-                .stroke_weight(LINE_WIDTH)
-                .w_h(1.0, 1.0)
-                .x_y(x as f32 + x_offset, y as f32 + y_offset)
-                .rotate(rotation)
-                ;
-        }
+    for stone in &model.gravel {
+        gdraw.rect()
+            .no_fill()
+            .stroke(BLACK)
+            .stroke_weight(LINE_WIDTH)
+            .w_h(1.0, 1.0)
+            .x_y(stone.x + stone.x_offset, stone.y + stone.y_offset)
+            .rotate(stone.rotation)
+            ;
     }
 
     draw.to_frame(app, &frame).unwrap();

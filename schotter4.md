@@ -144,3 +144,115 @@ You can, of course, just copy and paste this code into the function. What I actu
 Now we can adjust the behavior to our liking. Setting Motion to 0 (no motion) stops all of the squares (after finishing their current cycle). Setting it to 1 (full motion) never stops squares from moving. If it is set a bit more than 0, it will be mostly still but with occasional movement. Playing with the controls, we can get some interesting effects. For example, I set Displacement and Rotation to 0 and waited for all the squares to go back to their home positions. Then I set Motion to 0 to stop everything and set Displacement and Rotation back to 1. Then I increased Motion to about 0.2 and waited a bit while some of the squares moved, and set it back to 0 to freeze it before some of the squares moved from their original positions, giving the following (which would not be possible with earlier schotter versions):
 
 ![](images/schotter4b.png)
+
+That image was captured by pressing 'S', which saves the frame to the file "schotter4.png" in the directory the program was started from. But it only saves one frame; how can we save a clip from the animation? Nannou doesn't provide a method for video capture, so instead we need to save a sequence of frames and use another program to generate a video from those frames. Let's implement this, using 'R' for "record" to both start and stop the recording.
+
+In order to treat the sequence of images as a single thing, let's create a directory to store them in. Since Nannou doesn't provide access to a file selection dialog, we'll create a directory named "schotter4_frames" in the directory the program was started from. The image files themselves will be named "schotter####.png" where #### starts with 0001 and increases with each image. This convention is easy for video production programs to read.
+
+We'll need to add three new items to the model:
+* frames_dir: the name of the directory where the frames will be stored,
+* recording: a boolean that is true if we are recording and false if not, and
+* cur_frame: an integer containing the current frame number.
+
+So we add three lines to ```struct Model```:
+
+```
+frames_dir: String,
+cur_frame: u32,
+recording: bool,
+```
+
+In the model() function, we initialize them:
+
+```
+let frames_dir = app.exe_name().unwrap() + "_frames";
+let recording = false;
+let cur_frame = 0;
+```
+
+Then we put these in the appropriate place in the assignment to ```the_model```.
+
+In order to create the directory, we need to use the standard fs package. And we don't want to give an error if the directory already exists; to check for that we need to use ErrorKind. So we add these lines to the beginning of the program:
+
+```
+use std::fs;
+use std::io::ErrorKind;
+```
+
+The following code will create the directory, ignoring the error if it already exists, but panicing otherwise:
+
+```
+fs::create_dir(&model.frames_dir).unwrap_or_else(|error| {
+    if error.kind() != ErrorKind::AlreadyExists {
+        panic!{"Problem creating directory {:?}", model.frames_dir};
+```
+
+When the 'R' key is pressed, we first check to see if we are currently recording; if so we stop. Otherwise, we create the directory using the above code and initialize recording. Here is the code we add to key_pressed():
+
+```
+Key::R => {
+    if model.recording {
+        model.recording = false;
+    } else {
+        fs::create_dir(&model.frames_dir).unwrap_or_else(|error| {
+            if error.kind() != ErrorKind::AlreadyExists {
+                panic!{"Problem creating directory {:?}", model.frames_dir};
+            }
+        });
+        model.recording = true;
+        model.cur_frame = 0;
+    }
+}
+```
+
+Now we have the infrastructure needed to record a frame sequence; we just need to add code to do the actual recording. Since it needs to be done for each frame, we add it to update().
+
+First we increment cur_frame and use it to create the filename:
+
+```
+model.cur_frame += 1;
+let filename = format!("{}/schotter{:>04}.png",
+    model.frames_dir,
+    model.cur_frame);
+```
+
+Then we copy the Key::S code from key_pressed() and change it to use the right filename:
+
+```
+match app.window(model.main_window) {
+    Some(window) => {
+        window.capture_frame(filename);
+    }
+    None => {}
+}
+```
+
+Since update() now uses the "app" parameter, we need to remove the underscore from the parameter. And we only capture frames if we are recording. But there are two subtle issues we need to incorporate:
+
+* The Nannou loop rate is 60 times per second, but the typical video frame rate is 30 frames per second. So we only want to capture every other frame. We do this by checking if app.elapsed_frames() is even.
+* We only use four digit frame numbers, so need to stop recording when cur_frame exceeds 9999. (That's over five and a half hours at 30 frames/second.)
+
+Here is the final code segment added to update():
+
+```
+if model.recording && app.elapsed_frames() % 2 == 0 {
+    model.cur_frame += 1;
+    if model.cur_frame > 9999 {
+        model.recording = false;
+    } else {
+        let filename = format!("{}/schotter{:>04}.png",
+            model.frames_dir,
+            model.cur_frame);
+        match app.window(model.main_window) {
+            Some(window) => {
+                window.capture_frame(filename);
+            }
+            None => {}
+        }
+    }
+}
+```
+
+Here's the result I got pressing 'R', waiting two seconds, and pressing 'R' again. I converted the resulting frame sequence to a GIF file using the open source video editor [Shotcut](https://shotcut.org/).
+
+![](images/schotter4c.gif)

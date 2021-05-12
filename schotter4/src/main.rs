@@ -1,5 +1,7 @@
 use nannou::prelude::*;
 use nannou::ui::prelude::*;
+use std::fs;
+use std::io::ErrorKind;
 
 const ROWS: u32 = 22;
 const COLS: u32 = 12;
@@ -64,6 +66,9 @@ struct Model {
     ui: Ui,
     ids: Ids,
     main_window: WindowId,
+    frames_dir: String,
+    cur_frame: u32,
+    recording: bool,
     disp_adj: f32,
     rot_adj: f32,
     motion: f32,
@@ -96,6 +101,10 @@ fn model(app: &App) -> Model {
     theme.label_color = nannou::ui::prelude::color::WHITE;
     theme.shape_color = nannou::ui::prelude::color::CHARCOAL;
 
+    let frames_dir = app.exe_name().unwrap() + "_frames";
+    let recording = false;
+    let cur_frame = 0;
+
     let disp_adj = 1.0;
     let rot_adj = 1.0;
     let motion = 0.5;
@@ -112,6 +121,9 @@ fn model(app: &App) -> Model {
         ui,
         ids,
         main_window,
+        frames_dir,
+        recording,
+        cur_frame,
         disp_adj,
         rot_adj,
         motion,
@@ -124,7 +136,7 @@ fn model(app: &App) -> Model {
     the_model
 }
 
-fn update(_app: &App, model: &mut Model, _update: Update) {
+fn update(app: &App, model: &mut Model, _update: Update) {
     for stone in &mut model.gravel {
         if stone.cycles == 0 {
             if random_f32() > model.motion {
@@ -150,6 +162,23 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
             stone.y_offset += stone.y_velocity;
             stone.rotation += stone.rot_velocity;
             stone.cycles -= 1;
+        }
+    }
+
+    if model.recording && app.elapsed_frames() % 2 == 0 {
+        model.cur_frame += 1;
+        if model.cur_frame > 9999 {
+            model.recording = false;
+        } else {
+            let filename = format!("{}/schotter{:>04}.png",
+                model.frames_dir,
+                model.cur_frame);
+            match app.window(model.main_window) {
+                Some(window) => {
+                    window.capture_frame(filename);
+                }
+                None => {}
+            }
         }
     }
 }
@@ -184,6 +213,19 @@ fn key_pressed(app: &App, model: &mut Model, key: Key) {
                     window.capture_frame(app.exe_name().unwrap() + ".png");
                 }
                 None => {}
+            }
+        }
+        Key::R => {
+            if model.recording {
+                model.recording = false;
+            } else {
+                fs::create_dir(&model.frames_dir).unwrap_or_else(|error| {
+                    if error.kind() != ErrorKind::AlreadyExists {
+                        panic!{"Problem creating directory {:?}", model.frames_dir};
+                    }
+                });
+                model.recording = true;
+                model.cur_frame = 0;
             }
         }
         Key::Up => {

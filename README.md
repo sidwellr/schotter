@@ -16,15 +16,15 @@ Other generative artists have taken inspiration from this work. One I particular
 
 *Schotter* is fairly simple to code; at least it is today with modern graphics libraries. Several other people have written tutorials for how to code this using various platforms. I'm adding to this collection with a series of tutorials for coding it in Rust using the Nannou library.
 
-We'll be coding *Schotter* four different ways:
+We'll be coding *Schotter* four different ways, each building on the previous version:
 
 [Schotter1](schotter1.md): Using the Nannou "sketch" facility to code a simple version with no frills.
 
-Schotter2: Changing the code to a Nannou "app" with persistent data and some simple keyboard commands to adjust some parameters.
+[Schotter2](schotter2.md): Changing the code to a Nannou "app" with persistent data and some simple keyboard commands to adjust some parameters.
 
-Schotter3: Adding a control panel to make it easier to adjust parameters on the fly.
+[Schotter3](schotter3.md): Adding a control panel to make it easier to adjust parameters on the fly.
 
-Schotter4: Animating the squares, so they move from the starting grid to their displaced positions, and from their to new positions.
+[Schotter4](schotter4.md): Animating the squares, so they move from the starting grid to their displaced positions, and from there to new positions.
 
 I may add some variations later; after all, that's what creative coding is all about! But this is the initial plan.
 

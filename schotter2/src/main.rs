@@ -96,12 +96,13 @@ fn view(app: &App, model: &Model, frame: Frame) {
     draw.background().color(SNOW);
 
     for stone in &model.gravel {
-        gdraw.rect()
+        let cdraw = gdraw.x_y(stone.x, stone.y);
+        cdraw.rect()
             .no_fill()
             .stroke(BLACK)
             .stroke_weight(LINE_WIDTH)
             .w_h(1.0, 1.0)
-            .x_y(stone.x + stone.x_offset, stone.y + stone.y_offset)
+            .x_y(stone.x_offset, stone.y_offset)
             .rotate(stone.rotation)
             ;
     }

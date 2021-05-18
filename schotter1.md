@@ -47,7 +47,9 @@ fn view(app: &App, frame: Frame) {
 }
 ```
 
-The final setup step is to compile the template using the command ```cargo run --release -p schotter1```. This will take several minutes the first time it is run since it needs to compile Nannou and all of the libraries that it uses. Subsequent compiles will complete much more quickly.
+The final setup step is to compile the template using the command ```cargo run -p schotter1```. This will take several minutes the first time it is run since it needs to compile Nannou and all of the libraries that it uses. Subsequent compiles will complete much more quickly.
+
+When it's finished, a window will appear containing a blue circle on a plum background. Not very exciting, but it shows that the environment is working. Press 'Esc' to exit.
 
 Let's go through the sketch template line by line to see how it works. The first line tells Rust to use the Nannou Prelude, a collection of commonly used Nannou items that we can now use directly; this is a lot easier than prefixing them all with "nannou::*whatever*::".
 
@@ -132,17 +134,18 @@ gdraw.rect()
     ;
 ```
 
-Running this (with ```cargo run --release -p schotter1```), we see one square at the top left, just like we expect. To make a grid of squares, we use a couple of nested loops:
+Running this (with ```cargo run -p schotter1```), we see one square at the top left, just like we expect. To make a grid of squares, we use a couple of nested loops. We'll also create a new draw function ```cdraw``` (for cell draw) with the coordinate system centered on the square we are drawing.
 
 ```
 for y in 0..ROWS {
     for x in 0..COLS {
-        gdraw.rect()
+        let cdraw = gdraw.x_y(x as f32, y as f32);
+        cdraw.rect()
             .no_fill()
             .stroke(BLACK)
             .stroke_weight(LINE_WIDTH)
             .w_h(1.0, 1.0)
-            .x_y(x as f32, y as f32)
+            .x_y(0.0, 0.0)
             .rotate(0.0)
             ;
     }
@@ -158,16 +161,16 @@ let factor = y as f32 / ROWS as f32;
 let x_offset = factor * random_range(-0.5, 0.5);
 let y_offset = factor * random_range(-0.5, 0.5);
 let rotation = factor * random_range(-PI / 4.0, PI / 4.0);
-gdraw.rect()
+cdraw.rect()
     .no_fill()
     .stroke(BLACK)
     .stroke_weight(LINE_WIDTH)
     .w_h(1.0, 1.0)
-    .x_y(x as f32 + x_offset, y as f32 + y_offset)
+    .x_y(x_offset, y_offset)
     .rotate(rotation)
     ;
 ```
 
-And we're done! The result is, of course, different from what Georg Rees got; indeed it will be different each time the program is run. But it has the same feel.
+And we're done! The result is, of course, different from what Georg Rees got; indeed it will be different each time the program is run. That's the fun of generative art.
 
 ![](images/schotter1b.png)

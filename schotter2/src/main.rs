@@ -62,7 +62,7 @@ fn model(app: &App) -> Model {
     for y in 0..ROWS {
         for x in 0..COLS {
             let stone = Stone::new(x as f32, y as f32);
-            gravel.push(stone)
+            gravel.push(stone);
         }
     }
 

@@ -25,7 +25,7 @@ members=[
 
 Then create the new project with the command ```cargo new schotter2```, which will create the directory "schotter2" with a "src" subdirectory and the project Cargo.toml file. Add Nannou as a dependency by adding ```nannou = "0.16.0"``` to the end of schotter2/Cargo.toml just as we did for schotter1/Cargo.toml. (Use the same version as before; 0.16.0 was the latest available when I wrote this.)
 
-Now the process changes slightly. Instead of replacing the initial contents of schotter2/src/main.rs with a Nannou template, copy the contents of schotter1/src/main.rs to it. Now compile and run the program with the command ```cargo run -p schotter2```. It will work exactly the same as schotter1 did (since it is exactly the same code).
+Now the process changes slightly. Instead of replacing the initial contents of schotter2/src/main.rs with a Nannou template, copy the contents of schotter1/src/main.rs to it. Now compile and run the program with the command ```cargo run -p schotter2```. It will work exactly the same as schotter1 did (since it is exactly the same code). As before, press 'Esc' to exit.
 
 Now we switch schotter2 from a Nannou sketch to a Nannou app using the following steps:
 
@@ -45,7 +45,7 @@ nannou::app(model).update(update).run();
 struct Model {}
 ```
 
-3. Create a "model" function for creating the model. It is used for other initial setup as well, such as setting the loop mode and creating the Nannou window. This function is the argument to the ```app(model)``` we added to function main(). Again, we can call it anything, but the convention is to use "model". It takes one parameter, the Nannou App, and returns a Model struct.
+3. Create a "model" function for creating the model. It is used for other initial setup as well, such as setting the loop mode and creating the Nannou window. This function is the argument to the ```app(model)``` we added to function main(). Again, we can call it anything, but the convention is to use "model". It takes one parameter, the Nannou App, and returns a Model struct (empty at the moment).
 ```
 fn model(app: &App) -> Model {
     app.set_loop_mode(LoopMode::wait());
@@ -67,10 +67,10 @@ fn view(app: &App, frame: Frame) {
 ```
 New:
 ```
-fn view(app: &App, _model: &Model, frame: Frame) {\
+fn view(app: &App, _model: &Model, frame: Frame) {
 ```
 
-5. Remove the set_loop_mode statement from the beginning of the view function. It's cleaner to set the loop mode in the model function in an app since it is part of the app setup. (Sketches only have a view function, so that's where we put it.)
+5. Remove the set_loop_mode statement from the beginning of the view function. It's cleaner to set the loop mode in the model function in an app since it is part of the app setup. (Sketches only have a view function, so that's where we had to put it.)
 
 6. Create an "update" function that is called in each iteration to update the data in the model. Right now, we have nothing to update, so the body is blank.
 ```
@@ -158,7 +158,7 @@ fn key_pressed(_app: &App, model: &mut Model, key: Key) {
 
 This function is called whenever we press a key. It matches on the key we pressed; if it was 'R' we set random_seed to a new random number. Otherwise we ignore it. Now we don't need to quit and restart the program to get a new pattern; just press the 'R' key.
 
-When we find a pattern we like, it's nice to be able to save the result. So let's make 'S' do that. We need access to the App, so we first remove the underscore from the first argument, then add a case to our match statement for 'S':
+When we find a pattern we like, it would be nice to be able to save the result. So let's make 'S' do that. Nannou doesn't provide access to the file selection dialog, so it is hard to allow the user to choose a filename. Instead, we'll use use the program name (schotter2). To get this, key_pressed() will need access to the App, so we remove the underscore from the first argument, then add a case to our match statement for 'S':
 
 ```
 fn key_pressed(app: &App, model: &mut Model, key: Key) {
@@ -175,6 +175,8 @@ fn key_pressed(app: &App, model: &mut Model, key: Key) {
 
 }
 ```
+
+The ```capture_frame()``` function will capture the next frame just before it is drawn to the window and save it in a file. The ```app.exe_name()``` function returns the name of the executable that is currently running, which is "schotter2" now, but using this function means we don't need to change this line when we move on to "schotter3" and "schotter4".
 
 Now we can add controls to fine tune the appearance of the result. There are lots of things we could do! We'll just make the arrow keys control how much the squares are displaced and rotated.
 
@@ -233,7 +235,9 @@ Key::Left => {
 }
 ```
 
-We should make one more change: We don't currently keep any information about the states of the squares between iterations. This is fine since we regenerate the squares from scratch on each iteration. But the Nannou App paradigm supports keeping state information in the model, and doing this will make it easier to make future changes, especially adding animation. The initial state is created in the model() function along with other setup, and on each iteration the update() function is called to update the state before calling the view() function to display it.
+Try running the program now. It starts out looking the same, but we can increase or decrease the displacement using the up and down arrows, and increase or decrease the rotation using the right and left arrows. The result still has randomness, but we have some control over the appearance.
+
+We should make one more change: We don't currently keep any information about the states of the squares between iterations. This is fine since we regenerate the squares from scratch on each iteration. But the Nannou App paradigm supports keeping state information in the model, and doing this will make it easier to make future changes, especially adding animation. We'll need to create the initial state in the model() function along with other setup. Then, on each iteration the update() function is called to update the state before calling the view() function to display it.
 
 The first thing we need to do is create a struct to hold information about individual squares. Since Schotter means "gravel", we'll call this struct Stone, and we'll include a new() function for it:
 
@@ -280,7 +284,7 @@ let mut gravel = Vec::new();
 for y in 0..ROWS {
     for x in 0..COLS {
         let stone = Stone::new(x as f32, y as f32);
-        gravel.push(stone)
+        gravel.push(stone);
     }
 }
 
@@ -312,7 +316,8 @@ Finally, we edit the view() function to remove the code that was move elsewhere,
 
 ```
 for stone in &model.gravel {
-    gdraw.rect()
+    let cdraw = gdraw.x_y(stone.x, stone.y);
+    cdraw.rect()
         .no_fill()
         .stroke(BLACK)
         .stroke_weight(LINE_WIDTH)
@@ -326,3 +331,5 @@ for stone in &model.gravel {
 That's all we'll do for this program. Now that you know the pattern for adding new functionality, add your own! Here's an output I got by decreasing the rotation adjustment to 0 (no rotation) and increasing the displacement adjustment:
 
 ![](images/schotter2.png)
+
+Next tutorial: [Schotter3](schotter3.md)

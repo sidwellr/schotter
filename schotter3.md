@@ -140,7 +140,7 @@ The first line calls set_widgets() to get the context for creating new widgets. 
 
 The last method, ".set(model.ids.randomize, ui)", adds the new button to the UI. It uses the first parameter, the widget id, to see if the widget already exists. If so, it uses the existing one; if not it creates a new one. It also handles any user interaction with the button, such as changing the color if the mouse is hovering over it. It returns an Event reflecting the current state. The type varies depending on the widget. For a button, it returns a TimesClicked struct containing the number of times the button has been clicked since the last update.
 
-Now some Rust magic happens. The Event returned by .set() has the Iterator trait, so we can use it in a ```for in``` statement. If the button wasn't clicked, the Iterator returns an empty range, so the for statement body is skipped. If the button was clicked, the iterator returns (), the Rust "unit", and the body is executed. Here, the body assigns a new value to random_seed.
+Now some Rust magic happens. The Event returned by .set() has the Iterator trait, so we can use it in a ```for in``` statement. If the button wasn't clicked, the Iterator returns an empty range, so the for statement body is skipped. If the button was clicked, the iterator returns (), the Rust "unit", which we assign to the (unused) variable _click, and the body is executed. Here, the body assigns a new value to random_seed.
 
 Our UI with its single button is now created, but we still need to draw it to the UI window. This is done in the view function for the UI window, which we called ui_view (we had underscores in the parameter names earlier, but remove them now since we need to use them):
 
@@ -150,7 +150,7 @@ fn ui_view(app: &App, model: &Model, frame: Frame) {
 }
 ```
 
-There is still one minor bug, but compiling and running the program now is informative. The UI window is still blank! But the Randomize button suddenly appears if we move the mouse into the window. The problem is that we create our widgets in ui_event(), but that function is only called when an event happens in the UI window. To fix this, we need to simulate an event by calling ui_event during initialization, in the model() function.
+There is still one minor bug, but compiling and running the program now is informative. The UI window is still blank! But the Randomize button suddenly appears if we move the mouse into the window. The problem is that we create our widgets in ui_event(), but that function is only called when an event happens in the UI window. To fix this, we need to simulate a starting event by calling ui_event during initialization, in the model() function, so it will draw the panel.
 
 But ui_event() needs the model as one of its parameters. So rather than building the Model struct as the last line in model(), we assign it to a variable, then call ui_event(), then return the variable as the function result:
 
@@ -172,7 +172,7 @@ But ui_event() needs the model as one of its parameters. So rather than building
 }
 ```
 
-It's taken awhile to get here, but we finally have a very simple control panel. It only has one button, but adding more widgets is quite easy: just add the widget name to the widget_ids! macro at the beginning of the program, and add the code to create and use the widget to ui_event.
+It's taken awhile to get here, but we finally have a very simple control panel. It only has one button, but adding more widgets is quite easy: just add the widget name to the widget_ids! macro at the beginning of the program, then add the code to create and use the widget to ui_event.
 
 So let's step back and decide what we want our control panel to look like. There are a lot of possibilities, including adding exciting new functionality to the program, but let's keep it simple:
 * a title at the top: "Schotter Control Panel"
@@ -195,7 +195,7 @@ widget_ids! {
 }
 ```
 
-Now we add the code to implement them to ui_event. Starting with the title. It is a Text widget, which doesn't have any user interaction so we don't need to put it into a for in loop. There are lots of widget placement options; we'll use "top_left_with_margin" to put at the top left with a margin:
+Now we add the code to implement them to ui_event. Starting with the title. It is a Text widget, which doesn't have any user interaction so we don't need to put it into a for-in loop. There are lots of widget placement options; we'll use "top_left_with_margin" to put at the top left with a margin:
 
 ```
 // Control panel title
@@ -272,7 +272,7 @@ That was a lot of effort! The control panel code is more complicated than the ge
 
 Another advantage of a control panel that isn't quite so obvious is that is shows the values of the parameters used. Knowing them is essential if you ever need to replicate a particular output of the program. (Of course, that assumes that you record the values! Perhaps adding a way to save the parameters along with the image would be even better.)
 
-This is already really long, but building on the potential need to replicate a particular output, we should show the current random seed value in the panel and allow it to be changed. We'll use another Text widget for the label and a TextBox widget for the value itself.
+This is already long, but building on the potential need to replicate a particular output, we should show the current random seed value in the panel and allow it to be changed. We'll use another Text widget for the label and a TextBox widget for the value itself.
 
 We first add two more widget names to the widget_ids! macro: seed_label and seed_text. Then the following code to ui_event:
 
@@ -315,3 +315,5 @@ I think the more proper way to use a text box (and I haven't tried this yet!) is
 Meanwhile, I'll end with a picture of our finished control panel:
 
 ![](images/schotter3cp2.png)
+
+Next tutorial: [Schotter4](schotter4.md)

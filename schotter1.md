@@ -174,3 +174,5 @@ cdraw.rect()
 And we're done! The result is, of course, different from what Georg Rees got; indeed it will be different each time the program is run. That's the fun of generative art.
 
 ![](images/schotter1b.png)
+
+Next tutorial: [Schotter2](schotter2.md)

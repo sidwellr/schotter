@@ -76,6 +76,7 @@ struct Model {
 }
 
 fn model(app: &App) -> Model {
+    app.set_loop_mode(LoopMode::refresh_sync());
     let main_window = app.new_window()
                 .title("Schotter4")
                 .size(WIDTH, HEIGHT)
@@ -113,7 +114,7 @@ fn model(app: &App) -> Model {
     for y in 0..ROWS {
         for x in 0..COLS {
             let stone = Stone::new(x as f32, y as f32);
-            gravel.push(stone)
+            gravel.push(stone);
         }
     }
 
@@ -294,7 +295,7 @@ fn ui_event(_app: &App, model: &mut Model, _event: WindowEvent) {
 
     // Motion label
     widget::Text::new("Motion")
-        .down_from(model.ids.rot_label, 10.00)
+        .down_from(model.ids.rot_label, 10.0)
         .w_h(125.0, 30.0)
         .set(model.ids.motion_label, ui);
 

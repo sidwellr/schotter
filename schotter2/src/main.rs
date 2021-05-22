@@ -47,7 +47,7 @@ struct Model {
 fn model(app: &App) -> Model {
     app.set_loop_mode(LoopMode::wait());
     let _window = app.new_window()
-                .title("Schotter2")
+                .title(app.exe_name().unwrap())
                 .size(WIDTH, HEIGHT)
                 .view(view)
                 .key_pressed(key_pressed)

@@ -22,6 +22,6 @@ SOFTWARE.
 
 *************************
 
-The following files are copyrighted by others. They are included in this educational work under the United States doctrine of fair use, and not covered by the above license. Their inclusion in copies or derived works must be evaluated independently.
+The following files are copyrighted by others. They are included in this educational work under the United States doctrine of fair use, and not covered by the above license.
 
 images/schotter.jpg: Georg Nees, 1968; photograph by Jonathan Dredge, 2018

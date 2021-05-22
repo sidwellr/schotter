@@ -5,7 +5,7 @@ With schotter1, we made a very basic program that just generated a pattern, disp
 The goal of schotter2 is to add some parameters to schotter1 so we can try different patterns and make some design adjustments while the program is running. This make it much easier to find nice designs. For now, we will limit our interaction to key presses; we'll make a more convenient control panel in schotter3.
 
 Specifically, we want to implement the following commands by pressing the appropriate keys:
-* R: randomize the pattern (like re-running schotter1)
+* R: randomize the pattern
 * S: save the current pattern as a PNG file with the name schotter2.png
 * up/down arrows: increase/decrease the square displacement
 * right/left arrows: increase/decrease the square rotation
@@ -50,7 +50,7 @@ struct Model {}
 fn model(app: &App) -> Model {
     app.set_loop_mode(LoopMode::wait());
     let _window = app.new_window()
-                .title("Schotter2")
+                .title(app.exe_name().unwrap())
                 .size(WIDTH, HEIGHT)
                 .view(view)
                 .build()
@@ -81,7 +81,7 @@ Our Nannou sketch is now an app! It's a good idea to compile and run it to make 
 
 But simply moving the mouse will randomize the square positions, and that's annoying. It's the reason we set the loop mode to loop_once in schotter1! To fix this, we need to exert more control over the random number generator; specifically, we need to control the seed it uses.
 
-Random number generators (RNGs) compute a stream of numbers that are statistically random. The numbers aren't really random like flipping coins or rolling dice are, but they are often used to simulate such things so are very useful for things like games and generative art. RNGs can be initialized with a "seed", which is just a number to get it started. When re-initialized with the same seed value, a RNG will generate exactly the same sequence. This is just what we need! If we set the RNG seed to some value on each loop iteration before we use the random numbers, we will produce the same results.
+Random number generators (RNGs) compute a stream of numbers that are statistically random. The numbers aren't really random like flipping coins or rolling dice are, but they are often used to simulate such things so are very useful in programs like games and generative art. RNGs can be initialized with a "seed", which is basically a number to get it started. When re-initialized with the same seed value, a RNG will generate exactly the same sequence. This is just what we need! If we set the RNG seed to some value on each loop iteration before we use the random numbers, we will produce the same results.
 
 So the first variable we will add to our model is "random_seed", which has type u64. So our model definition becomes:
 
@@ -100,7 +100,7 @@ Whenever we change the Model, we need to change the model function to initialize
     }
 ```
 
-The simple random number generator we used in schotter1 is included in the Nannou prelude, so we can use it directly. But to use the seedable RNG we need to add two additional use statements to the beginning of the program:
+The simple random number generator we used in schotter1 is included in the Nannou prelude, so we can use it directly. But to use the seedable RNG we need to add two more use statements to the beginning of the program:
 
 ```
 use nannou::prelude::*;
@@ -134,7 +134,7 @@ Let's start with by making the 'R' key randomize the pattern by changing random_
 
 ```
 let _window = app.new_window()
-            .title("Schotter2")
+            .title(app.exe_name().unwrap())
             .size(WIDTH, HEIGHT)
             .view(view)
             .key_pressed(key_pressed)
@@ -152,13 +152,12 @@ fn key_pressed(_app: &App, model: &mut Model, key: Key) {
         }
         _other_key => {}
     }
-
 }
 ```
 
 This function is called whenever we press a key. It matches on the key we pressed; if it was 'R' we set random_seed to a new random number. Otherwise we ignore it. Now we don't need to quit and restart the program to get a new pattern; just press the 'R' key.
 
-When we find a pattern we like, it would be nice to be able to save the result. So let's make 'S' do that. Nannou doesn't provide access to the file selection dialog, so it is hard to allow the user to choose a filename. Instead, we'll use use the program name (schotter2). To get this, key_pressed() will need access to the App, so we remove the underscore from the first argument, then add a case to our match statement for 'S':
+When we find a pattern we like, it would be nice to be able to save the resulting image. Let's make 'S' do that. Nannou doesn't provide access to the file selection dialog, so it is hard to allow the user to choose a filename. Instead, we'll use use the program name (schotter2). To get this, key_pressed() will need access to the App, so we remove the underscore from the first argument, then add a case to our match statement for 'S':
 
 ```
 fn key_pressed(app: &App, model: &mut Model, key: Key) {
@@ -176,11 +175,11 @@ fn key_pressed(app: &App, model: &mut Model, key: Key) {
 }
 ```
 
-The ```capture_frame()``` function will capture the next frame just before it is drawn to the window and save it in a file. The ```app.exe_name()``` function returns the name of the executable that is currently running, which is "schotter2" now, but using this function means we don't need to change this line when we move on to "schotter3" and "schotter4".
+The ```capture_frame()``` function will capture the next frame just before it is drawn to the window and save it in a file. The ```app.exe_name()``` function returns the name of the executable that is currently running, which is "schotter2" now, but using this function means we don't need to change this line when we move on to "schotter3" and "schotter4". (We also used this function earlier to set the window title.)
 
 Now we can add controls to fine tune the appearance of the result. There are lots of things we could do! We'll just make the arrow keys control how much the squares are displaced and rotated.
 
-To do this, we need two more variables in the model, additional factors for the displacement and rotation:
+To do this, we need two more variables in the model to hold adjustment factors for the displacement and rotation:
 
 ```
 struct Model {
@@ -203,7 +202,7 @@ Model {
 }
 ```
 
-Now we need to incorporate these in the code:
+Now we need to incorporate the adjustment factors in the code in view():
 
 ```
 let factor = y as f32 / ROWS as f32;
@@ -312,7 +311,7 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
 }
 ```
 
-Finally, we edit the view() function to remove the code that was move elsewhere, keeping only the rect() call that draws the squares inside a new for loop that iterates through the model.gravel vector.
+Finally, we edit the view() function to remove the code that was moved elsewhere, keeping only the rect() call that draws the squares inside a new for loop that iterates through the model.gravel vector.
 
 ```
 for stone in &model.gravel {

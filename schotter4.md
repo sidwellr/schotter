@@ -20,7 +20,7 @@ struct Stone {
 }
 ```
 
-We need to add these to the Stone::new() function as well to give them initial values. The update() function will reset the new fields to random values whenever cycles reaches 0, so we start it at 0 and let update() worry about randomizing the others.
+We need to add these to the Stone::new() function as well to set their initial values. The update() function will reset the new fields to random values whenever cycles reaches 0, so we start it at 0 and let update() worry about randomizing the others.
 
 ```
 impl Stone {
@@ -115,7 +115,7 @@ if stone.cycles == 0 {
       // generate new velocity values as before
 ```
 
-A simple change, but I think it looks nicer when not all of the squares are moving at once. Of course, you may have a different opinion! And my opinion will change from time to time. So let's add a control to specify how often squares will be still. Instead of using random(), which just randomly returns true or false with a 50% chance, we'll use random_f32(), which returns a random value between 0 and 1, and compare that to the probability we will set with a slider.
+A simple change, but I think it looks nicer when not all of the squares are moving at once. Of course, you may have a different opinion! And my opinion will change from time to time. So let's add a control to specify how often squares will be still. Instead of using random(), which just randomly returns true or false with a 50% chance, we'll use random_f32(), which returns a random value between 0 and 1, and compare that to a probability we will set with a slider.
 
 First, we need to add a variable for this to Model. We'll call it "motion", and add it to the struct Model (I put ```motion: f32,``` between rot_adj and gravel), add a line ```let motion = 0.5;``` to the model() function, and include ```motion,``` in the correct place in our assignment to the_model. Then in update() we change ```if random()``` to ```if random_f32() > model.motion```.
 
@@ -149,8 +149,8 @@ In order to treat the sequence of images as a single thing, let's create a direc
 
 We'll need to add three new items to the model:
 * frames_dir: the name of the directory where the frames will be stored,
-* recording: a boolean that is true if we are recording and false if not, and
-* cur_frame: an integer containing the current frame number to use in the file name.
+* cur_frame: an integer containing the current frame number to use in the file name, and
+* recording: a boolean that is true if we are recording and false if not.
 
 So we add three lines to ```struct Model```:
 
@@ -170,7 +170,7 @@ let cur_frame = 0;
 
 Then we put these in the appropriate place in the assignment to ```the_model```.
 
-In order to create the directory, we need to use the standard fs package. And we don't want to give an error if the directory already exists; to check for that we need to use ErrorKind. So we add these lines to the beginning of the program:
+In order to create the directory, we need to use the standard fs package. And we don't want to give an error if the directory already exists; to check for that we need to use io::ErrorKind. So we add these lines to the beginning of the program:
 
 ```
 use std::fs;
@@ -203,7 +203,7 @@ Key::R => {
 }
 ```
 
-Now we have the infrastructure needed to record a frame sequence; we just need to add code to do the actual recording. Since it needs to be done for each frame, we add it to update(), after the for-in loop.
+Now we have the infrastructure needed to record a frame sequence; we just need to add code to do the actual recording. Since it needs to be done for each frame, we add it to update(), after the for loop.
 
 First we increment cur_frame and use it to create the filename:
 
@@ -225,10 +225,10 @@ match app.window(model.main_window) {
 }
 ```
 
-Since update() now uses the "app" parameter, we need to remove the underscore from the parameter. And we only capture frames if we are recording. But there are two subtle issues we need to incorporate:
+Since update() now uses the "app" parameter, we need to remove the underscore from the parameter in the header. And we only capture frames if we are recording. But there are two subtle issues we need to incorporate:
 
 * The Nannou loop rate is 60 times per second, but the typical video frame rate is 30 frames per second. So we only want to capture every other frame. We do this by checking if app.elapsed_frames() is even.
-* We only use four digit frame numbers, so need to stop recording when cur_frame exceeds 9999. (That's over five and a half hours at 30 frames/second.)
+* We only use four digit frame numbers, so need to stop recording when cur_frame exceeds 9999. (That's just over five and a half minutes at 30 frames/second. If we want a longer video, we need to use more digits.)
 
 Here is the final code segment added to update():
 

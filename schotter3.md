@@ -2,13 +2,13 @@
 
 Now that we have added parameters to control some of the Schotter behavior, for schotter3 let's add a control panel with buttons and sliders to control these parameters. Importantly, the control panel will also display the current values, which can allow us to reproduce the exact image at a later date.
 
-We still want to be able to save the generated image, and would like to do so without saving the control panel in the image, so we'll put the control panel in a second window. That's the easy part, so let's start there.
+We still want to be able to save the generated image, and would like to do so without saving the control panel in the image, so we'll put the control panel in a second window. We start by creating that window.
 
 The main window is created in the model function by calling new_window. We just copy that invocation and make a few changes to create a second window:
 
 ```
 let ui_window = app.new_window()
-            .title("Schotter3 controls")
+            .title(app.exe_name().unwrap() + " controls")
             .size(300, 200)
             .view(ui_view)
             .event(ui_event)
@@ -17,7 +17,7 @@ let ui_window = app.new_window()
             .unwrap();
 ```
 
-Each window can have its own view and event functions. Here we use "ui_view" to generate the contents and "ui_event" to handle general events. We also use the same key_pressed function as for the main window so the keypresses we implemented in schotter2 will work even if the control panel window has the focus. The size is just a guess; we can adjust it later to make it fit the controls. Control panel development is often a process of trying some layout and then tweaking the placements and sizes to look right. We will need the window id when we create the User Interface, so we put it into a variable.
+Each window can have its own view and event functions. Here we use "ui_view" to display the control panel and "ui_event" to generate the controls and handle general events. We also use the same key_pressed function as for the main window so the keypresses we implemented in schotter2 will work even if the control panel window has the focus. The size is just a guess; we can adjust it later to make it fit the controls. Control panel development is often a process of trying some layout and then tweaking the placements and sizes to look right. We will need the window id when we create the User Interface, so we put it into a variable.
 
 Next, we create the two functions we reference, leaving the bodies empty for now:
 
@@ -36,7 +36,7 @@ Key::S => {
 }
 ```
 
-While "app.main_window()" seems like it should return the main window, it actually returns the active one. This is acknowledged in the Nannou docs: "TODO: Currently this produces a reference to the focused window, but this behaviour should be changed to track the "main" window (the first window created?)". So this will probably be fixed in the future, but we don't want to wait! To fix this, we need to remember the id of the main window and make the save code use it instead of app.main_window().
+While "app.main_window()" seems like it should return the main window, it actually returns the active one. This is acknowledged in the Nannou docs: 'TODO: Currently this produces a reference to the focused window, but this behaviour should be changed to track the "main" window (the first window created?)'. So this will probably be fixed in the future, but we don't want to wait! To fix this, we need to remember the id of the main window and make the save code use it instead of app.main_window().
 
 First, we add a new field to the model; let's call it "main_window".
 
@@ -74,7 +74,7 @@ Key::S => {
 
 Now we have a second window where we can put our control panel, so let's put a control panel in it. This will take quite a few steps, but adding new elements is fairly easy once we have the basic structure. To begin, let's put a single "Randomize" button in the middle which will randomize the random_seed (just like typing "R").
 
-Nannou uses a library called Conrod for creating Graphic User Interfaces (GUIs). It uses a GUI style called "immediate mode", where the GUI elements (called "widgets") are created and drawn as part of the update/draw loop, which is the easiest to use for things like generative art and games. (The alternative used by more traditional applications is "retained mode", where widgets are created during setup and maintained by the graphics library. This can be more efficient, but is also more complex since it requires synchronization between the data and widget states.)
+Nannou uses a library called Conrod for creating Graphic User Interfaces (GUIs). It uses a GUI style called "immediate mode", where the GUI elements (called "widgets") are created and drawn as part of the update/draw loop, which works very well for programs like generative art and games. (The alternative used by more traditional applications is "retained mode", where widgets are created during setup and maintained by the graphics library. This can be more efficient, but is also more complex since it requires synchronization between the data and widget states.)
 
 To create a GUI in Nannou, we first add a use statement at the beginning for the Ui prelude:
 
@@ -134,15 +134,15 @@ fn ui_event(_app: &App, model: &mut Model, _event: WindowEvent) {
 }
 ```
 
-Earlier, we configured the UI window to call this function whenever any event happens in that window like a mouse move or click. Since Nannou uses the immediate mode style, the code we add here appears to create the GUI from scratch every time it is run. To make things more efficient, Nannou stores the current status of each widget in the model.ui variable. When we tell it to create a widget, it checks to see if it is already created and if so to use the existing widget.
+Earlier, we configured the UI window to call ui_event() whenever any event happens in that window like a mouse move or click. Since Nannou uses the immediate mode style, the code we add here appears to create the GUI from scratch every time it is run. To make things more efficient, Nannou stores the current status of each widget in the model.ui variable. When we tell it to create a widget, it checks to see if it is already created and if so it uses the existing widget.
 
-The first line calls set_widgets() to get the context for creating new widgets. The second line calls "widget::Button::new()" to create a new button. We specify properties for the button using the Rust builder model; the calls here says to put the button in the middle of the window, give it a width of 125 and a height of 40, and set the label to "Randomize".
+The first line calls set_widgets() to get the context for creating new widgets. The second line calls "widget::Button::new()" to create a new button. We specify properties for the button using the Rust builder model; the calls here say to put the button in the middle of the window, give it a width of 125 and a height of 40, and set the label to "Randomize".
 
-The last method, ".set(model.ids.randomize, ui)", adds the new button to the UI. It uses the first parameter, the widget id, to see if the widget already exists. If so, it uses the existing one; if not it creates a new one. It also handles any user interaction with the button, such as changing the color if the mouse is hovering over it. It returns an Event reflecting the current state. The type varies depending on the widget. For a button, it returns a TimesClicked struct containing the number of times the button has been clicked since the last update.
+The last method, ".set(model.ids.randomize, ui)", adds the new button to the UI. It uses the first parameter, the widget id, to see if the widget already exists. If so, it uses the existing one; if not it creates a new one. It also handles any user interaction with the button, such as changing the color if the mouse is hovering over it. It returns an Event reflecting the current state. The type varies depending on the widget. For a button, it returns a TimesClicked struct containing the number of times the button was clicked.
 
 Now some Rust magic happens. The Event returned by .set() has the Iterator trait, so we can use it in a ```for in``` statement. If the button wasn't clicked, the Iterator returns an empty range, so the for statement body is skipped. If the button was clicked, the iterator returns (), the Rust "unit", which we assign to the (unused) variable _click, and the body is executed. Here, the body assigns a new value to random_seed.
 
-Our UI with its single button is now created, but we still need to draw it to the UI window. This is done in the view function for the UI window, which we called ui_view (we had underscores in the parameter names earlier, but remove them now since we need to use them):
+Our UI with its single button is now created, but we still need to draw it to the UI window frame. This is done in the view function for the UI window, which we called ui_view (we had underscores in the parameter names earlier, but remove them now since we need to use them):
 
 ```
 fn ui_view(app: &App, model: &Model, frame: Frame) {
@@ -150,7 +150,7 @@ fn ui_view(app: &App, model: &Model, frame: Frame) {
 }
 ```
 
-There is still one minor bug, but compiling and running the program now is informative. The UI window is still blank! But the Randomize button suddenly appears if we move the mouse into the window. The problem is that we create our widgets in ui_event(), but that function is only called when an event happens in the UI window. To fix this, we need to simulate a starting event by calling ui_event during initialization, in the model() function, so it will draw the panel.
+There is still one minor bug, but compiling and running the program now is informative. The UI window is still blank! But the Randomize button suddenly appears if we move the mouse into the control panel. The problem is that we create our widgets in ui_event(), but that function is only called when an event happens in the UI window. To fix this, we need to simulate a starting event by calling ui_event during initialization, in the model() function, so it will draw the panel.
 
 But ui_event() needs the model as one of its parameters. So rather than building the Model struct as the last line in model(), we assign it to a variable, then call ui_event(), then return the variable as the function result:
 
@@ -178,7 +178,7 @@ So let's step back and decide what we want our control panel to look like. There
 * a title at the top: "Schotter Control Panel"
 * a slider labeled "Displacement" to control the square displacement (like the up/down arrows)
 * a slider labeled "Rotation" to control the rotation (like the left/right arrows)
-* the "Randomize" button that we've already built (but need to move to the bottom of the control panel)
+* the "Randomize" button that we've already built (but we need to move to the bottom of the control panel)
 
 The labels for the sliders are distinct from the sliders themselves, so we need five more widgets, six in all. Let's just do them all at once! First, we add them to the widget_ids! macro:
 
@@ -216,7 +216,9 @@ widget::Text::new("Displacement")
     .set(model.ids.disp_label, ui);
 ```
 
-Now for the actual displacement slider, which will control the disp_adj variable in the model. We'll use the current value of disp_adj as the slider label, but need to convert it to a string. Sliders return a value, which we can use in a for in statement similarly to a button. We'll place it to the right of the slider label using "right_from":
+Now for the actual displacement slider, which will control the disp_adj variable in the model. The parameters to new() are, in order, the current, minimum, and maximum values. Using the "immediate mode" model, the widget doesn't "remember" any previous value; it just draws the slider at the given value, which we specify as the value of disp_adj. This is convenient since we may have changed the value using the arrow keys, and this will update it with the new value. (Using a "retained mode" interface would require modifying the key_pressed() function to tell the UI the new value so it could update the panel, complexity that we avoid.)
+
+We'll also use the current value of disp_adj as the slider label, but need to convert it to a string. Sliders return a value, which we can use in a for in statement similarly to a button. We'll place it to the right of the slider label using "right_from":
 
 ```
 // Displacement slider
@@ -268,7 +270,7 @@ We now have a working control panel!
 
 ![](images/schotter3cp1.png)
 
-That was a lot of effort! The control panel code is more complicated than the generative art code. Which begs the question: Is it worth the effort? There is no single answer. For just a few options, using key presses as we did in schotter2 (and which still work!) is a lot easier. But once the initial work is done, it is easy to add lots more parameters, which would be easier to manage with a control panel. If you expect other people to use your program, a control panel is probably worth the effort.
+That was a lot of effort! The control panel code is more complicated than the generative art code. Which begs the question: Is it worth the effort? There is no single answer. For just a few options, using key presses as we did in schotter2 (and which still work!) is a lot easier. But once the initial work is done, it is easy to add lots more parameters, which would be easier to manage with a control panel. If you expect other people to use your program, a control panel is more intuitive so probably worth the effort.
 
 Another advantage of a control panel that isn't quite so obvious is that is shows the values of the parameters used. Knowing them is essential if you ever need to replicate a particular output of the program. (Of course, that assumes that you record the values! Perhaps adding a way to save the parameters along with the image would be even better.)
 

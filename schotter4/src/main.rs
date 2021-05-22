@@ -78,7 +78,7 @@ struct Model {
 fn model(app: &App) -> Model {
     app.set_loop_mode(LoopMode::refresh_sync());
     let main_window = app.new_window()
-                .title("Schotter4")
+                .title(app.exe_name().unwrap())
                 .size(WIDTH, HEIGHT)
                 .view(view)
                 .key_pressed(key_pressed)
@@ -86,7 +86,7 @@ fn model(app: &App) -> Model {
                 .unwrap();
 
     let ui_window = app.new_window()
-                .title("Schotter4 controls")
+                .title(app.exe_name().unwrap() + " controls")
                 .size(300, 200)
                 .view(ui_view)
                 .event(ui_event)

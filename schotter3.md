@@ -49,7 +49,7 @@ Then we modify the model function. Instead of storing the main window id in "_wi
 
 ```
 let main_window = app.new_window()
-            .title("Schotter2")
+            .title(app.exe_name().unwrap())
 ```
 
 And we include that in the model result:
@@ -82,7 +82,7 @@ To create a GUI in Nannou, we first add a use statement at the beginning for the
 use nannou::ui::prelude::*;
 ```
 
-Each widget we will use needs to have an Id. We use a special macro to list the widgets and generate an Id for each. We start with one widget: the Randomize button:
+Each widget we will use needs to have an Id. We use a special macro to list the widgets and generate an Id for each. We start with one widget: the Randomize button. I put this right after the main() function, but it can go anywhere.
 
 ```
 widget_ids! {
@@ -110,13 +110,13 @@ let ids = Ids::new(ui.widget_id_generator());
 Next, we modify the UI background and "theme", which controls things like the widget colors. The defaults result in lots of black text on black backgrounds, which isn't at all readable. It is confusing and a bit annoying that the Nannou and UI functions use different and non-interchangable color definitions. But we'll live with it. We add these lines just below the previous ones:
 
 ```
-ui.clear_with(nannou::ui::prelude::color::DARK_CHARCOAL);
+ui.clear_with(color::DARK_CHARCOAL);
 let mut theme = ui.theme_mut();
-theme.label_color = nannou::ui::prelude::color::WHITE;
-theme.shape_color = nannou::ui::prelude::color::CHARCOAL;
+theme.label_color = color::WHITE;
+theme.shape_color = color::CHARCOAL;
 ```
 
-After adding these two new items to the return struct, we now have a widget we can use. It is created (as a button) in the event function for the UI window, like this (note that we use model, so remove the underscore from the parameter):
+After adding ```ui``` and ```ids``` to the return struct, we now have a widget we can use. It is created (as a button) in the event function for the UI window, like this (note that we use model, so remove the underscore from the parameter):
 
 ```
 fn ui_event(_app: &App, model: &mut Model, _event: WindowEvent) {
@@ -140,7 +140,9 @@ The first line calls set_widgets() to get the context for creating new widgets. 
 
 The last method, ".set(model.ids.randomize, ui)", adds the new button to the UI. It uses the first parameter, the widget id, to see if the widget already exists. If so, it uses the existing one; if not it creates a new one. It also handles any user interaction with the button, such as changing the color if the mouse is hovering over it. It returns an Event reflecting the current state. The type varies depending on the widget. For a button, it returns a TimesClicked struct containing the number of times the button was clicked.
 
-Now some Rust magic happens. The Event returned by .set() has the Iterator trait, so we can use it in a ```for in``` statement. If the button wasn't clicked, the Iterator returns an empty range, so the for statement body is skipped. If the button was clicked, the iterator returns (), the Rust "unit", which we assign to the (unused) variable _click, and the body is executed. Here, the body assigns a new value to random_seed.
+Then some Rust magic happens. The Event returned by .set() for all widgets has the Iterator trait, so we can use it in a ```for``` statement. The ```for``` statement is commonly used for iterating over a range (```for i in 0..5```) or a vector (```for element in vector```), but it can be used with any type that has an Iterator. For a button, if the button was not clicked the iterator will iterate 0 times, thus skipping the ```for``` statement body. If the button was clicked once the iterator will iterate one time. In theory, if the button was clicked more than once, the iterator will iterate multiple times, once for each click. But in practice, humans can't click the button more than once during a given call. (Maybe a bot could.)
+
+When the iterator iterates, it needs to return some value. Here it returns (), the Rust "unit", which is used when a value is needed but information is not. We assign it to the (unused) variable _click. The ```for``` body assigns a new value to random_seed.
 
 Our UI with its single button is now created, but we still need to draw it to the UI window frame. This is done in the view function for the UI window, which we called ui_view (we had underscores in the parameter names earlier, but remove them now since we need to use them):
 
@@ -224,7 +226,7 @@ We'll also use the current value of disp_adj as the slider label, but need to co
 // Displacement slider
 for value in widget::Slider::new(model.disp_adj, 0.0, 5.0)
     .right_from(model.ids.disp_label, 10.0)
-    .w_h(175.0, 30.0)
+    .w_h(150.0, 30.0)
     .label(&model.disp_adj.to_string())
     .set(model.ids.disp_slider, ui)
 {
@@ -244,7 +246,7 @@ widget::Text::new("Rotation")
 // Rotation slider
 for value in widget::Slider::new(model.rot_adj, 0.0, 5.0)
     .right_from(model.ids.rot_label, 10.0)
-    .w_h(175.0, 30.0)
+    .w_h(150.0, 30.0)
     .label(&model.rot_adj.to_string())
     .set(model.ids.rot_slider, ui)
 {
@@ -276,7 +278,7 @@ Another advantage of a control panel that isn't quite so obvious is that is show
 
 This is already long, but building on the potential need to replicate a particular output, we should show the current random seed value in the panel and allow it to be changed. We'll use another Text widget for the label and a TextBox widget for the value itself.
 
-We first add two more widget names to the widget_ids! macro: seed_label and seed_text. Then the following code to ui_event:
+We first add two more widget names to the widget_ids! macro: seed_label and seed_text. Then the following code to the end of ui_event:
 
 ```
 // Seed label

@@ -321,7 +321,7 @@ for stone in &model.gravel {
         .stroke(BLACK)
         .stroke_weight(LINE_WIDTH)
         .w_h(1.0, 1.0)
-        .x_y(stone.x + stone.x_offset, stone.y + stone.y_offset)
+        .x_y(stone.x_offset, stone.y_offset)
         .rotate(stone.rotation)
         ;
 }

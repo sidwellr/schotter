@@ -83,10 +83,10 @@ fn model(app: &App) -> Model {
     let mut ui = app.new_ui().window(ui_window).build().unwrap();
     let ids = Ids::new(ui.widget_id_generator());
 
-    ui.clear_with(nannou::ui::prelude::color::DARK_CHARCOAL);
+    ui.clear_with(color::DARK_CHARCOAL);
     let mut theme = ui.theme_mut();
-    theme.label_color = nannou::ui::prelude::color::WHITE;
-    theme.shape_color = nannou::ui::prelude::color::CHARCOAL;
+    theme.label_color = color::WHITE;
+    theme.shape_color = color::CHARCOAL;
 
     let random_seed = random_range(0, 1000000);
     let disp_adj = 1.0;

@@ -83,7 +83,7 @@ When we compile and run this, it starts out fine; the squares move gradually to 
 
 ![](images/schotter4a.png)
 
-When I first coded this, I puzzled for awhile why it didn't produce random results. So kudos if you see the problem! Clicking Randomize makes the squares move to a new configuration, but still not very random. The problem is subtle. Remember back in schotter2 when we added a seeded random number generator to give consistent results each time through the loop? We still start each iteration of update() with the same seed, so get the same sequence of random numbers each time. It works fine the first time, when all of the cycles values are 0. But since cycles will then be different for each square, only a few will be 0 on subsequent iterations, so they randomness is greatly reduced.
+When I first coded this, I puzzled for awhile why it didn't produce random results. So kudos if you see the problem! Clicking Randomize makes the squares move to a new configuration, but still not very random. The problem is subtle. Remember back in schotter2 when we added a seeded random number generator to give consistent results each time through the loop? We still start each iteration of update() with the same seed, so get the same sequence of random numbers each time. It works fine the first time, when all of the cycles values are 0. But since cycles will then be different for each square, only a few will be 0 on subsequent iterations, so their randomness is greatly reduced.
 
 Now that we are animating it, we don't want to repeat the random numbers. One way to fix this is to add rng, our seeded random number generator, to the model, initializing it with the seed in the model() function, and reinitializing it whenever we press 'R' or click Randomize. But it is probably easier just to abandon the seeded random number generator and use the Nannou random_range() function to generate them. Let's try that, replacing the four occurrences of ```rng.gen_range()``` with ```random_range()```:
 
@@ -177,14 +177,6 @@ use std::fs;
 use std::io::ErrorKind;
 ```
 
-The following code will create the directory, ignoring the error if it already exists, but panicing for other errors:
-
-```
-fs::create_dir(&model.frames_dir).unwrap_or_else(|error| {
-    if error.kind() != ErrorKind::AlreadyExists {
-        panic!{"Problem creating directory {:?}", model.frames_dir};
-```
-
 When the 'R' key is pressed, we first check to see if we are currently recording; if so we stop. Otherwise, we create the directory using the above code and initialize recording. Here is the code we add to key_pressed():
 
 ```
@@ -202,6 +194,8 @@ Key::R => {
     }
 }
 ```
+
+The ```fs::create_dir()``` function will create the directory and return a ```Result```, which is either ```()``` if it worked or an ```Error``` if there was a problem. The ```unwrap_or_else()``` will unwrap the ```Result``` and, if there was an error, process the error. Without this, an error would cause a panic, which is what we want if the error was unexpected but if the directory already exists we want to ignore it. So we look at the error kind and panic only if it isn't ```AlreadyExists```.
 
 Now we have the infrastructure needed to record a frame sequence; we just need to add code to do the actual recording. Since it needs to be done for each frame, we add it to update(), after the for loop.
 

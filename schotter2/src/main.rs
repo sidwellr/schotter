@@ -80,9 +80,9 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
         let factor = stone.y / ROWS as f32;
         let disp_factor = factor * model.disp_adj;
         let rot_factor = factor * model.rot_adj;
-        stone.x_offset = disp_factor * rng.gen_range(-0.5, 0.5);
-        stone.y_offset = disp_factor * rng.gen_range(-0.5, 0.5);
-        stone.rotation = rot_factor * rng.gen_range(-PI / 4.0, PI / 4.0);
+        stone.x_offset = disp_factor * rng.gen_range(-0.5..0.5);
+        stone.y_offset = disp_factor * rng.gen_range(-0.5..0.5);
+        stone.rotation = rot_factor * rng.gen_range(-PI / 4.0..PI / 4.0);
     }
 }
 

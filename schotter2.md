@@ -23,7 +23,7 @@ members=[
 ]
 ```
 
-Then create the new project with the command ```cargo new schotter2```, which will create the directory "schotter2" with a "src" subdirectory and the project Cargo.toml file. Add Nannou as a dependency by adding ```nannou = "0.16.0"``` to the end of schotter2/Cargo.toml just as we did for schotter1/Cargo.toml. (Use the same version as before; 0.16.0 was the latest available when I wrote this.)
+Then create the new project with the command ```cargo new schotter2```, which will create the directory "schotter2" with a "src" subdirectory and the project Cargo.toml file. Add Nannou as a dependency by adding ```nannou = "0.17.0"``` to the end of schotter2/Cargo.toml just as we did for schotter1/Cargo.toml. (Use the same version as before. All programs in a single workspace should use the same versions of the libraries.)
 
 Now the process changes slightly. Instead of replacing the initial contents of schotter2/src/main.rs with a Nannou template, copy the contents of schotter1/src/main.rs to it. Now compile and run the program with the command ```cargo run -p schotter2```. It will work exactly the same as schotter1 did (since it is exactly the same code). As before, press 'Esc' to exit.
 
@@ -120,12 +120,12 @@ Note that rng must be mutable; generating a random number changes the internal s
 fn view(app: &App, model: &Model, frame: Frame) {
 ```
 
-Finally, we replace the three calls to "random_range()" with "rng.gen_range()" so we get random numbers from our seeded RNG instead of the standard one:
+Finally, we replace the three calls to "random_range()" with "rng.gen_range()" so we get random numbers from our seeded RNG instead of the standard one. But the instead of two arguments specifying the range, rng.gen_range() takes a single range argument (this was a change in Nannou version 0.17.0). So we also need to change the ',' to '..':
 
 ```
-let x_offset = factor * rng.gen_range(-0.5, 0.5);
-let y_offset = factor * rng.gen_range(-0.5, 0.5);
-let rotation = factor * rng.gen_range(-PI / 4.0, PI / 4.0);
+let x_offset = factor * rng.gen_range(-0.5..0.5);
+let y_offset = factor * rng.gen_range(-0.5..0.5);
+let rotation = factor * rng.gen_range(-PI / 4.0..PI / 4.0);
 ```
 
 Finally, if we compile and run the program now it will work the same as schotter1. But now we can add new functionality.
@@ -208,9 +208,9 @@ Now we need to incorporate the adjustment factors in the code in view():
 let factor = y as f32 / ROWS as f32;
 let disp_factor = factor * model.disp_adj;
 let rot_factor = factor * model.rot_adj;
-let x_offset = disp_factor * rng.gen_range(-0.5, 0.5);
-let y_offset = disp_factor * rng.gen_range(-0.5, 0.5);
-let rotation = rot_factor * rng.gen_range(-PI / 4.0, PI / 4.0);
+let x_offset = disp_factor * rng.gen_range(-0.5..0.5);
+let y_offset = disp_factor * rng.gen_range(-0.5..0.5);
+let rotation = rot_factor * rng.gen_range(-PI / 4.0..PI / 4.0);
 ```
 
 Finally, we add cases to the key_pressed() function to change the new variables (notice the check to keep the values positive):
@@ -304,9 +304,9 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
         let factor = stone.y / ROWS as f32;
         let disp_factor = factor * model.disp_adj;
         let rot_factor = factor * model.rot_adj;
-        stone.x_offset = disp_factor * rng.gen_range(-0.5, 0.5);
-        stone.y_offset = disp_factor * rng.gen_range(-0.5, 0.5);
-        stone.rotation = rot_factor * rng.gen_range(-PI / 4.0, PI / 4.0);
+        stone.x_offset = disp_factor * rng.gen_range(-0.5..0.5);
+        stone.y_offset = disp_factor * rng.gen_range(-0.5..0.5);
+        stone.rotation = rot_factor * rng.gen_range(-PI / 4.0..PI / 4.0);
     }
 }
 ```

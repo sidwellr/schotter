@@ -61,10 +61,10 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
             let factor = stone.y / ROWS as f32;
             let disp_factor = factor * model.disp_adj;
             let rot_factor = factor * model.rot_adj;
-            let new_x = disp_factor * rng.gen_range(-0.5, 0.5);
-            let new_y = disp_factor * rng.gen_range(-0.5, 0.5);
-            let new_rot = rot_factor * rng.gen_range(-PI / 4.0, PI / 4.0);
-            let new_cycles = rng.gen_range(50, 300);
+            let new_x = disp_factor * rng.gen_range(-0.5..0.5);
+            let new_y = disp_factor * rng.gen_range(-0.5..0.5);
+            let new_rot = rot_factor * rng.gen_range(-PI / 4.0..PI / 4.0);
+            let new_cycles = rng.gen_range(50..300);
             stone.x_velocity = (new_x - stone.x_offset) / new_cycles as f32;
             stone.y_velocity = (new_y - stone.y_offset) / new_cycles as f32;
             stone.rot_velocity = (new_rot - stone.rotation) / new_cycles as f32;
@@ -85,7 +85,7 @@ When we compile and run this, it starts out fine; the squares move gradually to 
 
 When I first coded this, I puzzled for awhile why it didn't produce random results. So kudos if you see the problem! Clicking Randomize makes the squares move to a new configuration, but still not very random. The problem is subtle. Remember back in schotter2 when we added a seeded random number generator to give consistent results each time through the loop? We still start each iteration of update() with the same seed, so get the same sequence of random numbers each time. It works fine the first time, when all of the cycles values are 0. But since cycles will then be different for each square, only a few will be 0 on subsequent iterations, so their randomness is greatly reduced.
 
-Now that we are animating it, we don't want to repeat the random numbers. One way to fix this is to add rng, our seeded random number generator, to the model, initializing it with the seed in the model() function, and reinitializing it whenever we press 'R' or click Randomize. But it is probably easier just to abandon the seeded random number generator and use the Nannou random_range() function to generate them. Let's try that, replacing the four occurrences of ```rng.gen_range()``` with ```random_range()```:
+Now that we are animating it, we don't want to repeat the random numbers. One way to fix this is to add rng, our seeded random number generator, to the model, initializing it with the seed in the model() function, and reinitializing it whenever we press 'R' or click Randomize. But it is probably easier just to abandon the seeded random number generator and use the Nannou random_range() function to generate them. Let's try that, replacing the four occurrences of ```rng.gen_range()``` with ```random_range()``` (also replacing the single range with two arguments):
 
 ```
   let new_x = disp_factor * random_range(-0.5, 0.5);

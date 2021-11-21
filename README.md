@@ -19,7 +19,10 @@ Here are the steps I use for creating a Rust workspace:
     members=[
 
     ]
+    resolver="2"
     ```
+    The "members" is a list of workspace members; we'll add our variations to it as we go. Nannou 0.18.0 and later require using version "2" of the feature resolver, so that needs to be specified.
+
 3. Optionally initialize configuration management for that directory. I like to use git for this. When I get something I like (and that works), I commit the files in git. Then as I make changes, I can easily compare what I have done to that version, and I can easily revert back to that version if I really mess things up and want to start again. This also makes it easy to publish the result online (for example, on GitHub). There are two steps:
     * Initialize the repository. This can be done with the command line (```git init```). Alternatively, many editors have a method to do this. For example, in VS Code go to the Source Control view (Ctrl+Shift+G) and click Initialize Repository.
 

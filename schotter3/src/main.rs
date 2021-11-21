@@ -1,7 +1,7 @@
 use nannou::prelude::*;
 use nannou::rand::rngs::StdRng;
 use nannou::rand::{Rng, SeedableRng};
-use nannou::ui::prelude::*;
+use nannou_conrod::prelude::*;
 
 const ROWS: u32 = 22;
 const COLS: u32 = 12;
@@ -75,12 +75,12 @@ fn model(app: &App) -> Model {
                 .title(app.exe_name().unwrap() + " controls")
                 .size(300, 200)
                 .view(ui_view)
-                .event(ui_event)
+                .raw_event(raw_ui_event)
                 .key_pressed(key_pressed)
                 .build()
                 .unwrap();
 
-    let mut ui = app.new_ui().window(ui_window).build().unwrap();
+    let mut ui = nannou_conrod::builder(app).window(ui_window).build().unwrap();
     let ids = Ids::new(ui.widget_id_generator());
 
     ui.clear_with(color::DARK_CHARCOAL);
@@ -100,7 +100,7 @@ fn model(app: &App) -> Model {
         }
     }
 
-    let mut the_model = Model {
+    Model {
         ui,
         ids,
         main_window,
@@ -108,15 +108,11 @@ fn model(app: &App) -> Model {
         disp_adj,
         rot_adj,
         gravel,
-    };
-
-    // Send a fake ui_event to draw widgets
-    ui_event(&app, &mut the_model, WindowEvent::Focused);
-
-    the_model
+    }
 }
 
 fn update(_app: &App, model: &mut Model, _update: Update) {
+    update_ui(model);
     let mut rng = StdRng::seed_from_u64(model.random_seed);
     for stone in &mut model.gravel {
         let factor = stone.y / ROWS as f32;
@@ -185,7 +181,15 @@ fn key_pressed(app: &App, model: &mut Model, key: Key) {
 
 }
 
-fn ui_event(_app: &App, model: &mut Model, _event: WindowEvent) {
+fn ui_view(app: &App, model: &Model, frame: Frame) {
+    model.ui.draw_to_frame_if_changed(app, &frame).unwrap();
+}
+
+fn raw_ui_event(app: &App, model: &mut Model, event: &nannou_conrod::RawWindowEvent) {
+    model.ui.handle_raw_event(app, event);
+}
+
+fn update_ui(model: &mut Model) {
     let ui = &mut model.ui.set_widgets();
 
     // Control panel title
@@ -249,7 +253,7 @@ fn ui_event(_app: &App, model: &mut Model, _event: WindowEvent) {
         .w_h(100.0, 30.0)
         .set(model.ids.seed_text, ui)
     {
-        use nannou::ui::widget::text_box::Event;
+        use nannou_conrod::widget::text_box::Event;
         match event {
             Event::Update(seed) => {
                 model.random_seed = seed.parse().unwrap_or(0);
@@ -257,8 +261,4 @@ fn ui_event(_app: &App, model: &mut Model, _event: WindowEvent) {
             Event::Enter => {}
         }
     }
-}
-
-fn ui_view(app: &App, model: &Model, frame: Frame) {
-    model.ui.draw_to_frame_if_changed(app, &frame).unwrap();
 }

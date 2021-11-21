@@ -1,5 +1,5 @@
 use nannou::prelude::*;
-use nannou::ui::prelude::*;
+use nannou_conrod::prelude::*;
 use std::fs;
 use std::io::ErrorKind;
 
@@ -89,18 +89,18 @@ fn model(app: &App) -> Model {
                 .title(app.exe_name().unwrap() + " controls")
                 .size(300, 200)
                 .view(ui_view)
-                .event(ui_event)
+                .raw_event(raw_ui_event)
                 .key_pressed(key_pressed)
                 .build()
                 .unwrap();
 
-    let mut ui = app.new_ui().window(ui_window).build().unwrap();
+    let mut ui = nannou_conrod::builder(app).window(ui_window).build().unwrap();
     let ids = Ids::new(ui.widget_id_generator());
 
-    ui.clear_with(nannou::ui::prelude::color::DARK_CHARCOAL);
+    ui.clear_with(color::DARK_CHARCOAL);
     let mut theme = ui.theme_mut();
-    theme.label_color = nannou::ui::prelude::color::WHITE;
-    theme.shape_color = nannou::ui::prelude::color::CHARCOAL;
+    theme.label_color = color::WHITE;
+    theme.shape_color = color::CHARCOAL;
 
     let frames_dir = app.exe_name().unwrap() + "_frames";
     let recording = false;
@@ -118,7 +118,7 @@ fn model(app: &App) -> Model {
         }
     }
 
-    let mut the_model = Model {
+    Model {
         ui,
         ids,
         main_window,
@@ -129,15 +129,11 @@ fn model(app: &App) -> Model {
         rot_adj,
         motion,
         gravel,
-    };
-
-    // Send a fake ui_event to draw widgets
-    ui_event(&app, &mut the_model, WindowEvent::Focused);
-
-    the_model
+    }
 }
 
 fn update(app: &App, model: &mut Model, _update: Update) {
+    update_ui(model);
     for stone in &mut model.gravel {
         if stone.cycles == 0 {
             if random_f32() > model.motion {
@@ -251,7 +247,15 @@ fn key_pressed(app: &App, model: &mut Model, key: Key) {
 
 }
 
-fn ui_event(_app: &App, model: &mut Model, _event: WindowEvent) {
+fn ui_view(app: &App, model: &Model, frame: Frame) {
+    model.ui.draw_to_frame_if_changed(app, &frame).unwrap();
+}
+
+fn raw_ui_event(app: &App, model: &mut Model, event: &nannou_conrod::RawWindowEvent) {
+    model.ui.handle_raw_event(app, event);
+}
+
+fn update_ui(model: &mut Model) {
     let ui = &mut model.ui.set_widgets();
 
     // Control panel title
@@ -308,8 +312,4 @@ fn ui_event(_app: &App, model: &mut Model, _event: WindowEvent) {
     {
         model.motion = value;
     }
-}
-
-fn ui_view(app: &App, model: &Model, frame: Frame) {
-    model.ui.draw_to_frame_if_changed(app, &frame).unwrap();
 }

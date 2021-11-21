@@ -1,10 +1,11 @@
 [package]
 name = "schotter4"
-version = "0.1.0"
+version = "0.3.0"
 authors = ["Rick Sidwell"]
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-nannou = "0.17.0"
+nannou = "0.18"
+nannou_conrod = "0.18"

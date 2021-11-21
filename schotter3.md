@@ -2,6 +2,8 @@
 
 Now that we have added parameters to control some of the Schotter behavior, for schotter3 let's add a control panel with buttons and sliders to control these parameters. Importantly, the control panel will also display the current values, which can allow us to reproduce the exact image at a later date.
 
+Nannou will someday have an integrated Graphical User Interface, nannou_gui, but it doesn't exist yet. In the meantime, Nannou does include integration with the Conrod GUI, which is part of the Piston game engine; we'll use that for our control panel.
+
 We still want to be able to save the generated image, and would like to do so without saving the control panel in the image, so we'll put the control panel in a second window. We start by creating that window.
 
 The main window is created in the model function by calling new_window. We just copy that invocation and make a few changes to create a second window:
@@ -11,20 +13,20 @@ let ui_window = app.new_window()
             .title(app.exe_name().unwrap() + " controls")
             .size(300, 200)
             .view(ui_view)
-            .event(ui_event)
+            .raw_event(raw_ui_event)
             .key_pressed(key_pressed)
             .build()
             .unwrap();
 ```
 
-Each window can have its own view and event functions. Here we use "ui_view" to display the control panel and "ui_event" to generate the controls and handle general events. We also use the same key_pressed function as for the main window so the keypresses we implemented in schotter2 will work even if the control panel window has the focus. The size is just a guess; we can adjust it later to make it fit the controls. Control panel development is often a process of trying some layout and then tweaking the placements and sizes to look right. We will need the window id when we create the User Interface, so we put it into a variable.
+Each window can have its own view and event functions. Here we use "ui_view" to display the control panel and "raw_ui_event" to handle control panel events. We also use the same key_pressed function as for the main window so the keypresses we implemented in schotter2 will work even if the control panel window has the focus. The size is just a guess; we can adjust it later to make it fit the controls. Control panel development is often a process of trying some layout and then tweaking the placements and sizes to look right. We will need the window id when we create the User Interface, so we put it into a variable.
 
 Next, we create the two functions we reference, leaving the bodies empty for now:
 
 ```
-fn ui_event(_app: &App, _model: &mut Model, _event: WindowEvent) {}
-
 fn ui_view(_app: &App, _model: &Model, _frame: Frame) {}
+
+fn raw_ui_event(_app: &App, _model: &mut Model, _event: &nannou_conrod::RawWindowEvent) {}
 ```
 
 If we compile and run now, Rust will warn us that ui_window is unused, but two windows will be created: the main one with the Schotter design and a small blank one where our controls will go. But there is actually a subtle bug: if you press 'S' while the control panel window is active, that window will be saved instead of the main window. To see why, let's look at the save code:
@@ -74,12 +76,32 @@ Key::S => {
 
 Now we have a second window where we can put our control panel, so let's put a control panel in it. This will take quite a few steps, but adding new elements is fairly easy once we have the basic structure. To begin, let's put a single "Randomize" button in the middle which will randomize the random_seed (just like typing "R").
 
-Nannou uses a library called Conrod for creating Graphic User Interfaces (GUIs). It uses a GUI style called "immediate mode", where the GUI elements (called "widgets") are created and drawn as part of the update/draw loop, which works very well for programs like generative art and games. (The alternative used by more traditional applications is "retained mode", where widgets are created during setup and maintained by the graphics library. This can be more efficient, but is also more complex since it requires synchronization between the data and widget states.)
+The Conrod library uses a GUI style called "immediate mode", where the GUI elements (called "widgets") are created and drawn as part of the update/draw loop, which works very well for programs like generative art and games. (The alternative used by more traditional applications is "retained mode", where widgets are created during setup and maintained by the graphics library. This can be more efficient, but is also more complex since it requires synchronization between the data and widget states.)
 
-To create a GUI in Nannou, we first add a use statement at the beginning for the Ui prelude:
+To create a Conrod GUI in Nannou, we need to add nannou_conrod as a dependency to the Cargo.toml file (along with Nannou itself):
 
 ```
-use nannou::ui::prelude::*;
+[dependencies]
+nannou = "0.18"
+nannou_conrod = "0.18"
+```
+
+Next, we add a use statement for the Conrod prelude at the beginning of the code:
+
+```
+use nannou_conrod::prelude::*;
+```
+
+Now we can add the code for the ui_view() and raw_ui_event() functions we created earlier. The code is simple, and will be the same for any program that uses Conrod:
+
+```
+fn ui_view(app: &App, model: &Model, frame: Frame) {
+    model.ui.draw_to_frame_if_changed(app, &frame).unwrap();
+}
+
+fn raw_ui_event(app: &App, model: &mut Model, event: &nannou_conrod::RawWindowEvent) {
+    model.ui.handle_raw_event(app, event);
+}
 ```
 
 Each widget we will use needs to have an Id. We use a special macro to list the widgets and generate an Id for each. We start with one widget: the Randomize button. I put this right after the main() function, but it can go anywhere.
@@ -100,14 +122,14 @@ struct Model {
     ids: Ids,
 ```
 
-Then, of course, we need to initialize these items in our model function. The Ui is created using the app's new_ui() function, and the id list with the Ui widget_id_generator() function. Note that ui needs to be mutable since widget_id_generator() will modify it.
+Then, of course, we need to initialize these items in our model function. The Ui is created using the nannou_conrod::builder() function, and the id list with the Ui widget_id_generator() function. Note that ui needs to be mutable since widget_id_generator() will modify it.
 
 ```
-let mut ui = app.new_ui().window(ui_window).build().unwrap();
+let mut ui = nannou_conrod::builder(app).window(ui_window).build().unwrap();
 let ids = Ids::new(ui.widget_id_generator());
 ```
 
-Next, we modify the UI background and "theme", which controls things like the widget colors. The defaults result in lots of black text on black backgrounds, which isn't at all readable. It is confusing and a bit annoying that the Nannou and UI functions use different and non-interchangable color definitions. But we'll live with it. We add these lines just below the previous ones:
+Next, we modify the Conrod background and "theme", which controls things like the widget colors. The defaults result in lots of black text on black backgrounds, which isn't at all readable. It is confusing and a bit annoying that the Nannou and Conrod functions use different and non-interchangable color definitions. But we'll live with it. We add these lines just below the previous ones:
 
 ```
 ui.clear_with(color::DARK_CHARCOAL);
@@ -116,10 +138,12 @@ theme.label_color = color::WHITE;
 theme.shape_color = color::CHARCOAL;
 ```
 
-After adding ```ui``` and ```ids``` to the return struct, we now have a widget we can use. It is created (as a button) in the event function for the UI window, like this (note that we use model, so remove the underscore from the parameter):
+After adding ```ui``` and ```ids``` to the return struct, we now have a widget we can use. Since Conrod is an immediate mode GUI, we create the widgets on every update. Or so it appears; to make things more efficient, Nannou stores the current status of each widget in the model.ui variable. When we tell it to create a widget, it checks to see if it is already created and if so it uses the existing widget.
+
+We'll create a separate function, update_ui(), to create the widgets and get their current values. Right now, there is just the Randomize button.
 
 ```
-fn ui_event(_app: &App, model: &mut Model, _event: WindowEvent) {
+fn update_ui(model: &mut Model) {
     let ui = &mut model.ui.set_widgets();
 
     // Randomize button
@@ -134,8 +158,6 @@ fn ui_event(_app: &App, model: &mut Model, _event: WindowEvent) {
 }
 ```
 
-Earlier, we configured the UI window to call ui_event() whenever any event happens in that window like a mouse move or click. Since Nannou uses the immediate mode style, the code we add here appears to create the GUI from scratch every time it is run. To make things more efficient, Nannou stores the current status of each widget in the model.ui variable. When we tell it to create a widget, it checks to see if it is already created and if so it uses the existing widget.
-
 The first line calls set_widgets() to get the context for creating new widgets. The second line calls "widget::Button::new()" to create a new button. We specify properties for the button using the Rust builder model; the calls here say to put the button in the middle of the window, give it a width of 125 and a height of 40, and set the label to "Randomize".
 
 The last method, ".set(model.ids.randomize, ui)", adds the new button to the UI. It uses the first parameter, the widget id, to see if the widget already exists. If so, it uses the existing one; if not it creates a new one. It also handles any user interaction with the button, such as changing the color if the mouse is hovering over it. It returns an Event reflecting the current state. The type varies depending on the widget. For a button, it returns a TimesClicked struct containing the number of times the button was clicked.
@@ -144,37 +166,14 @@ Then some Rust magic happens. The Event returned by .set() for all widgets has t
 
 When the iterator iterates, it needs to return some value. Here it returns (), the Rust "unit", which is used when a value is needed but information is not. We assign it to the (unused) variable _click. The ```for``` body assigns a new value to random_seed.
 
-Our UI with its single button is now created, but we still need to draw it to the UI window frame. This is done in the view function for the UI window, which we called ui_view (we had underscores in the parameter names earlier, but remove them now since we need to use them):
+For our final step, we need to call update_ui() from update(); we'll add that as the very first line so we can get current values for all the variables:
 
 ```
-fn ui_view(app: &App, model: &Model, frame: Frame) {
-    model.ui.draw_to_frame_if_changed(app, &frame).unwrap();
-}
+fn update(_app: &App, model: &mut Model, _update: Update) {
+    update_ui(model);
 ```
 
-There is still one minor bug, but compiling and running the program now is informative. The UI window is still blank! But the Randomize button suddenly appears if we move the mouse into the control panel. The problem is that we create our widgets in ui_event(), but that function is only called when an event happens in the UI window. To fix this, we need to simulate a starting event by calling ui_event during initialization, in the model() function, so it will draw the panel.
-
-But ui_event() needs the model as one of its parameters. So rather than building the Model struct as the last line in model(), we assign it to a variable, then call ui_event(), then return the variable as the function result:
-
-```
-  let mut the_model = Model {
-      ui,
-      ids,
-      main_window,
-      random_seed,
-      disp_adj,
-      rot_adj,
-      gravel,
-  };
-
-  // Send a fake ui_event to draw widgets
-  ui_event(&app, &mut the_model, WindowEvent::Focused);
-
-  the_model
-}
-```
-
-It's taken awhile to get here, but we finally have a very simple control panel. It only has one button, but adding more widgets is quite easy: just add the widget name to the widget_ids! macro at the beginning of the program, then add the code to create and use the widget to ui_event.
+It's taken awhile to get here, but we finally have a very simple control panel. It only has one button, but adding more widgets is quite easy: just add the widget name to the widget_ids! macro at the beginning of the program, then add the code to create and use the widget to update_ui().
 
 So let's step back and decide what we want our control panel to look like. There are a lot of possibilities, including adding exciting new functionality to the program, but let's keep it simple:
 * a title at the top: "Schotter Control Panel"
@@ -197,7 +196,7 @@ widget_ids! {
 }
 ```
 
-Now we add the code to implement them to ui_event. Starting with the title. It is a Text widget, which doesn't have any user interaction so we don't need to put it into a for-in loop. There are lots of widget placement options; we'll use "top_left_with_margin" to put at the top left with a margin:
+Now we add the code to implement them to update_ui. Starting with the title. It is a Text widget, which doesn't have any user interaction so we don't need to put it into a for-in loop. There are lots of widget placement options; we'll use "top_left_with_margin" to put at the top left with a margin:
 
 ```
 // Control panel title
@@ -293,7 +292,7 @@ for event in widget::TextBox::new(&model.random_seed.to_string())
     .w_h(100.0, 30.0)
     .set(model.ids.seed_text, ui)
 {
-    use nannou::ui::widget::text_box::Event;
+    use nannou_conrod::widget::text_box::Event;
     match event {
         Event::Update(seed) => {
             model.random_seed = seed.parse().unwrap_or(0);

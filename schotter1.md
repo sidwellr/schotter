@@ -19,20 +19,20 @@ members=[
 ]
 ```
 
-We then create the new project with the command ```cargo new schotter1```. That will create the folder "schotter1" with a "src" subfolder and the project Cargo.toml file. The next step is to make that a Nannou project by editing the project Cargo.toml file (the one in the schotter1 folder, not the workspace one we modified earlier) to add Nannou as a dependency. For this project, we will use Nannou version 0.17.0, so we add the following to the end of schotter1/Cargo.toml, after ```[dependencies]```:
+We then create the new project with the command ```cargo new schotter1```. That will create the folder "schotter1" with a "src" subfolder and the project Cargo.toml file. The next step is to make that a Nannou project by editing the project Cargo.toml file (the one in the schotter1 folder, not the workspace one we modified earlier) to add Nannou as a dependency. For this project, we will use Nannou version 0.18, so we add the following to the end of schotter1/Cargo.toml, after ```[dependencies]```:
 
 ```
 [dependencies]
-nannou = "0.17.0"
+nannou = "0.18"
 ```
 
 Nannou is updated frequently with new features and bug fixes, so when you start a new project, you may want to be sure you are using the latest version of Nannou. You can look that up with the command ```cargo search nannou```. The output will contain a line such as the following:
 
 ```
-nannou = "0.17.0"             # A Creative Coding Framework for Rust.
+nannou = "0.18.0"             # A Creative Coding Framework for Rust.
 ```
 
-When I wrote this in May 2021, the latest version was 0.16.0, but a new version was released the next month so I updated this tutorial to use 0.17.0. This actually required changing some of the code since the parameters for the random number generator function gen_range() changed (we'll see this in schotter2). Specifying the exact version of the libraries in Cargo.toml prevents changes like this from breaking our code when libraries are updated.
+When I wrote this in May 2021, the latest version was 0.16.0, but a new version was released the next month so I updated this tutorial to use 0.17.0. This actually required changing some of the code since the parameters for the random number generator function gen_range() changed (we'll see this in schotter2). When version 0.18.0 was released five months later, yet more changes were needed. Specifying the exact version of the libraries in Cargo.toml prevents changes like this from breaking our code when libraries are updated.
 
 The "cargo new" command created a simple Rust program in the file main.rs in the src directory. We now need to replace that with a Nannou starting point. Since we're starting from scratch here, let's use one of the Nannou templates from https://github.com/nannou-org/nannou/tree/master/examples/templates. There are two kinds of Nannou projects: sketches and apps. Sketches can't track application state or use some of the advanced Nannou features, but are much simpler so we'll start there. (Apps are more flexible and allow more control; we'll convert to the app model in the next version, schotter2.)
 

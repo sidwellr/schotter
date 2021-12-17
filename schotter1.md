@@ -65,12 +65,15 @@ Function view() implements the main logic of the sketch. For sketches, it has tw
 
 The first line of view assigns the application's Draw interface to the variable "draw". The other three lines then use this Draw interface to perform drawing operations: setting the background to "PLUM", drawing a "STEELBLUE" circle, and finally rendering the previous commands to the Frame (and thus displaying them on the screen).
 
-The last "draw.to_frame" line is used just like this in most every Nannou program. We'll leave it alone. The "draw.background" line is useful, but let's change "PLUM" to "SNOW" to make a white background (but not completely white). We don't need a circle, so let's delete the "draw.ellipse" line; we'll code the schotter logic in its place.
+The last "draw.to_frame" line is used just like this in most every Nannou program. It takes all the draw operations and actually renders them to the frame so they will be displayed.
 
-We need to add one line to the beginning of the view function. By default, the view function gets called repeatedly, allowing animations. But we aren't animating; we just want it to run one time. We set this loop mode by adding the following line:
+The template is a great starting point, and running it shows we have everything set up correctly. Now we'll change it to draw something that looks like Schotter. First, we'll set the loop mode. By default, the view function gets called repeatedly, allowing animations. But we aren't animating; we just want it to run one time. We can set this in main by adding an additional item to the sketch, like this:
+
 ```
-app.set_loop_mode(LoopMode::loop_once());
+nannou::sketch(view).size(WIDTH, HEIGHT).loop_mode(LoopMode::loop_once()).run()
 ```
+
+In the view function, the "draw.background" line is useful, but let's change "PLUM" to "SNOW" to make a white background (but not completely white). We don't need a circle, so let's delete the "draw.ellipse" line; we'll code the schotter logic in its place.
 
 Before we start coding the schotter logic, we need to set up the coordinate system we want to use. The Draw interface we get from the App will have the origin in the center with a scale of one pixel per unit, positive *x* to the right, and positive *y* to the top. We need to rescale that coordinate system to have *size* pixels per unit (*size* is the length of each side of the squares), move the origin to where we want to put the top left square, and flip *y* so positive values go down. Now is the time to do that!
 

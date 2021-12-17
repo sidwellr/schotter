@@ -47,7 +47,11 @@ impl Stone {
 }
 ```
 
-We don't need to change the Model struct at all since it just keeps a vector of Stones. But we do need to change the set_loop_mode() call at the beginning of model(). Since we want the main loop to always iterate for an animation, we change ```wait()``` to ```refresh_sync()```.
+We don't need to change the Model struct at all since it just keeps a vector of Stones. But we do need to change the loop mode. Since we want the main loop to iterate repeatedly for an animation, we change ```wait()``` to ```refresh_sync()```. This will make Nannou synchronize running the update/view loop with the monitor's refresh rate (typically 1/60 second).
+
+```
+nannou::app(model).update(update).loop_mode(LoopMode::refresh_sync()).run()
+```
 
 The main changes to implement the animation are to the update() function. We keep the main for loop ```for stone in &mut model.gravel```, but only want to randomize the stone when stone.cycles is 0. Rather than setting the offsets and rotation directly, we compute a new random "target": new_x, new_y, and new_rot, as well as a random number of cycles to reach it: new_cycles. We then compute the velocity values by subtracting the current from the new and dividing by the number of cycles.
 

@@ -12,7 +12,7 @@ const WIDTH: u32 = COLS * SIZE + 2 * MARGIN;
 const HEIGHT: u32 = ROWS * SIZE + 2 * MARGIN;
 
 fn main() {
-    nannou::app(model).update(update).run()
+    nannou::app(model).update(update).loop_mode(LoopMode::refresh_sync()).run()
 }
 
 widget_ids! {
@@ -76,7 +76,6 @@ struct Model {
 }
 
 fn model(app: &App) -> Model {
-    app.set_loop_mode(LoopMode::refresh_sync());
     let main_window = app.new_window()
                 .title(app.exe_name().unwrap())
                 .size(WIDTH, HEIGHT)

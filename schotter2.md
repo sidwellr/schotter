@@ -33,11 +33,11 @@ Now we switch schotter2 from a Nannou sketch to a Nannou app using the following
 
 Old:
 ```
-nannou::sketch(view).size(WIDTH, HEIGHT).run()
+nannou::sketch(view).size(WIDTH, HEIGHT).loop_mode(LoopMode::loop_once()).run()
 ```
 New:
 ```
-nannou::app(model).update(update).run();
+nannou::app(model).update(update).loop_mode(LoopMode::loop_once()).run();
 ```
 
 2. Add a "Model" struct to contain the persistent data we will use. We can call it whatever we want, but we'll follow the convention and use "Model". It doesn't contain anything yet; we'll add fields to it shortly.
@@ -48,7 +48,6 @@ struct Model {}
 3. Create a "model" function for creating the model. It is used for other initial setup as well, such as setting the loop mode and creating the Nannou window. This function is the argument to the ```app(model)``` we added to function main(). Again, we can call it anything, but the convention is to use "model". It takes one parameter, the Nannou App, and returns a Model struct (empty at the moment).
 ```
 fn model(app: &App) -> Model {
-    app.set_loop_mode(LoopMode::wait());
     let _window = app.new_window()
                 .title(app.exe_name().unwrap())
                 .size(WIDTH, HEIGHT)
@@ -70,14 +69,18 @@ New:
 fn view(app: &App, _model: &Model, frame: Frame) {
 ```
 
-5. Remove the set_loop_mode statement from the beginning of the view function. It's cleaner to set the loop mode in the model function in an app since it is part of the app setup. (Sketches only have a view function, so that's where we had to put it.)
-
-6. Create an "update" function that is called in each iteration to update the data in the model. Right now, we have nothing to update, so the body is blank.
+5. Create an "update" function that is called in each iteration to update the data in the model. Right now, we have nothing to update, so the body is blank.
 ```
 fn update(_app: &App, _model: &mut Model, _update: Update) {}
 ```
 
-Our Nannou sketch is now an app! It's a good idea to compile and run it to make sure there aren't any typos or other errors. We didn't change any logic, but we did make one change: the loop mode is now "wait" instead of "loop_once". We need to loop more often so that parameter changes will take effect. Loop mode wait means to run the loop (the update and view functions) only after user input events. So as long as you don't touch the keyboard or mouse, the program will run the same as before.
+Our Nannou sketch is now an app! It's a good idea to compile and run it to make sure there aren't any typos or other errors. We didn't change any logic, so it will work just as before, but now we have the ability to add persistent data (in the model) and update that when we want to.
+
+Of course, if we are going to update things, we need to run the update/view loop more that once. So let's change the loop mode from `loop_once()` to `wait()`; this means to run the loop (the update and view functions) only after user input events. So as long as you don't touch the keyboard or mouse, the program will run the same as before.
+
+```
+nannou::app(model).update(update).loop_mode(LoopMode::wait()).run()
+```
 
 But simply moving the mouse will randomize the square positions, and that's annoying. It's the reason we set the loop mode to loop_once in schotter1! To fix this, we need to exert more control over the random number generator; specifically, we need to control the seed it uses.
 

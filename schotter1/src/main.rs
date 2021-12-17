@@ -9,11 +9,10 @@ const WIDTH: u32 = COLS * SIZE + 2 * MARGIN;
 const HEIGHT: u32 = ROWS * SIZE + 2 * MARGIN;
 
 fn main() {
-    nannou::sketch(view).size(WIDTH, HEIGHT).run()
+    nannou::sketch(view).size(WIDTH, HEIGHT).loop_mode(LoopMode::loop_once()).run()
 }
 
 fn view(app: &App, frame: Frame) {
-    app.set_loop_mode(LoopMode::loop_once());
     let draw = app.draw();
     let gdraw = draw.scale(SIZE as f32)
                     .scale_y(-1.0)

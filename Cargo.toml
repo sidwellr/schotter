@@ -3,6 +3,8 @@ members=[
     "schotter1",
     "schotter2",
     "schotter3",
+    "schotter3a",
     "schotter4",
+    "schotter4a",
 ]
 resolver="2"

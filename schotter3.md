@@ -1,4 +1,4 @@
-# Schotter3: Add a control panel
+# Schotter3: Add a control panel with Conrod
 
 Now that we have added parameters to control some of the Schotter behavior, for schotter3 let's add a control panel with buttons and sliders to control these parameters. Importantly, the control panel will also display the current values, which can allow us to reproduce the exact image at a later date.
 
@@ -138,7 +138,7 @@ theme.label_color = color::WHITE;
 theme.shape_color = color::CHARCOAL;
 ```
 
-After adding ```ui``` and ```ids``` to the return struct, we now have a widget we can use. Since Conrod is an immediate mode GUI, we create the widgets on every update. Or so it appears; to make things more efficient, Nannou stores the current status of each widget in the model.ui variable. When we tell it to create a widget, it checks to see if it is already created and if so it uses the existing widget.
+After adding ```ui``` and ```ids``` to the return struct, we now have a GUI we can use. Since Conrod is an immediate mode GUI, we create the widgets on every update. Or so it appears; to make things more efficient, Nannou stores the current status of each widget in the model.ui variable. When we tell it to create a widget, it checks to see if it is already created and if so it uses the existing widget.
 
 We'll create a separate function, update_ui(), to create the widgets and get their current values. Right now, there is just the Randomize button.
 

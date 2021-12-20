@@ -334,4 +334,4 @@ That's all we'll do for this program. Now that you know the pattern for adding n
 
 ![](images/schotter2.png)
 
-Next tutorial: [Schotter3](schotter3.md)
+Next tutorial: [Schotter3](schotter3.md) (Conrod version) or [Schotter3a](schotter3a.md) (egui version)

@@ -12,7 +12,7 @@ This may seem a bit confusing, but Nannou makes it easy to use a different coord
 
 Since we are using a Rust workspace, the first step is to edit the workspace cargo.toml file and add the new project to the members list. We'll call it "schotter1", so the file now looks like this:
 
-```
+```toml
 [workspace]
 members=[
     "schotter1",
@@ -21,24 +21,24 @@ members=[
 
 We then create the new project with the command ```cargo new schotter1```. That will create the folder "schotter1" with a "src" subfolder and the project Cargo.toml file. The next step is to make that a Nannou project by editing the project Cargo.toml file (the one in the schotter1 folder, not the workspace one we modified earlier) to add Nannou as a dependency. For this project, we will use Nannou version 0.18, so we add the following to the end of schotter1/Cargo.toml, after ```[dependencies]```:
 
-```
+```toml
 [dependencies]
 nannou = "0.18"
 ```
 
 Nannou is updated frequently with new features and bug fixes, so when you start a new project, you may want to be sure you are using the latest version of Nannou. You can look that up with the command ```cargo search nannou```. The output will contain a line such as the following:
 
-```
+```toml
 nannou = "0.18.0"             # A Creative Coding Framework for Rust.
 ```
 
 When I wrote this in May 2021, the latest version was 0.16.0, but a new version was released the next month so I updated this tutorial to use 0.17.0. This actually required changing some of the code since the parameters for the random number generator function gen_range() changed (we'll see this in schotter2). When version 0.18.0 was released five months later, yet more changes were needed. Specifying the exact version of the libraries in Cargo.toml prevents changes like this from breaking our code when libraries are updated.
 
-The "cargo new" command created a simple Rust program in the file main.rs in the src directory. We now need to replace that with a Nannou starting point. Since we're starting from scratch here, let's use one of the Nannou templates from https://github.com/nannou-org/nannou/tree/master/examples/templates. There are two kinds of Nannou projects: sketches and apps. Sketches can't track application state or use some of the advanced Nannou features, but are much simpler so we'll start there. (Apps are more flexible and allow more control; we'll convert to the app model in the next version, schotter2.)
+The "cargo new" command created a simple Rust program in the file main.rs in the src directory. We now need to replace that with a Nannou starting point. Since we're starting from scratch here, let's use one of the Nannou templates from <https://github.com/nannou-org/nannou/tree/master/examples/templates>. There are two kinds of Nannou projects: sketches and apps. Sketches can't track application state or use some of the advanced Nannou features, but are much simpler so we'll start there. (Apps are more flexible and allow more control; we'll convert to the app model in the next version, schotter2.)
 
 The template for a new Nannou sketch is ```template_sketch.rs```. Click that file name and copy the Rust code. Then open main.rs, delete the simple Rust program that cargo put there, and paste in the sketch template code. It looks like this:
 
-```
+```rust
 use nannou::prelude::*;
 
 fn main() {
@@ -67,11 +67,11 @@ The first line of view assigns the application's Draw interface to the variable 
 
 The last "draw.to_frame" line is used just like this in most every Nannou program. It takes all the draw operations and actually renders them to the frame so they will be displayed.
 
-The template is a great starting point, and running it shows we have everything set up correctly. Now we'll change it to draw something that looks like Schotter. 
+The template is a great starting point, and running it shows we have everything set up correctly. Now we'll change it to draw something that looks like Schotter.
 
-First, in the view function, the "draw.background" line is useful, but let's change "PLUM" to "SNOW" to make a white background (but not completely white). 
+First, in the view function, the "draw.background" line is useful, but let's change "PLUM" to "SNOW" to make a white background (but not completely white).
 
-```
+```rust
 draw.background().color(SNOW);
 ```
 
@@ -85,7 +85,7 @@ Before we start coding the schotter logic, we need to set up the coordinate syst
 
 First, we need to decide how big we want our squares to be, in pixels. Let's start with 30 pixels. To make things easy to adjust later, let's define some constants at the beginning of the code to define the basic parameters.
 
-```
+```rust
 const ROWS: u32 = 22;
 const COLS: u32 = 12;
 const SIZE: u32 = 30;
@@ -96,19 +96,20 @@ const HEIGHT: u32 = ROWS * SIZE + 2 * MARGIN;
 
 Once we know the number of rows and columns of squares and the size of each square (we also added a margin), we can compute the width and height of the window needed to show them. To set the size of the Nannou window, we add an additional function to our sketch call in function main, like this:
 
-```
+```rust
   nannou::sketch(view).size(WIDTH, HEIGHT).run()
 ```
 
 We'll also set the loop mode. By default, the view function gets called repeatedly, allowing animations. But we aren't animating; we just want it to run one time. We can set this in main by adding an additional item to the sketch, like this:
 
-```
+```rust
 nannou::sketch(view).size(WIDTH, HEIGHT).loop_mode(LoopMode::loop_once()).run()
 ```
 
 This uses the Rust builder pattern, where a structure is built using functions that are chained together. It is especially useful for specifying optional parameters, like the size of the sketch window here. Size is the only thing you can specify for sketch (besides run, which actually starts the sketch), but some constructs have a lot more. Draw has several dozen!
 
 In particular, Draw implements the following functions (among others) that we can use to transform the default coordinate system to the one we want to use:
+
 * scale(s) - scale the x and y (and z) axes by s
 * scale_x(s) - scale only the x axis by s
 * scale_y(s) - scale only the y axis by s
@@ -122,7 +123,7 @@ We won't need to rotate, so we'll ignore that one, but we do need to scale and t
 
 We need to change from 1 pixel per unit to SIZE pixels per unit, so we use ```scale(SIZE as f32)``` (all these functions take floating point arguments). We also want to flip y so that positive values go down instead of up. We do this by scaling y by -1: ```scale_y(-1.0)```. The scale is now what we want, but the origin is in the center, between squares, instead of the middle of the top left square, so we translate x by COLS/2 + 1/2 and y by ROWS/2 + 1/2 (the 1/2 is to move it from the corner to the center of the square). But we first need to convert the integers to floating point: ```x_y(COLS as f32 / -2.0 + 0.5, ROWS as f32 / -2.0 + 0.5)```. We chain these together and assign the result to a new variable gdraw (for grid draw), like this:
 
-```
+```rust
     let draw = app.draw();
     let gdraw = draw.scale(SIZE as f32)
                   .scale_y(-1.0)
@@ -132,19 +133,21 @@ We need to change from 1 pixel per unit to SIZE pixels per unit, so we use ```sc
 The three builder functions are split into multiple lines for readability; this is standard style when using builder patterns in Rust.
 
 So now we have two Draw interfaces:
+
 * draw, using the standard Nannou coordinate system
 * gdraw, using our custom grid coordinate system
 
 We can use either one to draw objects, depending on which coordinate system we need. Note that this is a big difference between Nannou and other creative coding libraries that have global functions like ellipse() and rect() to draw objects using the "current" drawing state. It is a bit harder to use since you always need to specify a draw interface to use. But on the other hand, there is no need for push or pop functions to make temporary changes to the drawing state and restore it when done. I personally really like the Nannou paradigm.
 
 Before making a grid, let's do a quick check to make sure we have everything right so far by drawing a single square at (0, 0) (the top left corner). We will need one more constant: the width of the lines that form the squares. Since the width of a square is 1, this is the fraction of the square width used for the lines. We'll start with 6% or 0.06 with the line:
-```
+
+```rust
 const LINE_WIDTH: f32 = 0.06;
 ```
 
 Drawing a square is done with the rect() function, which also uses the Rust builder pattern. Here is the code (I like to put the semi-colon on its own line when writing these so I don't forget or lose it when adding or removing builder functions):
 
-```
+```rust
 gdraw.rect()
     .no_fill()
     .stroke(BLACK)
@@ -159,7 +162,7 @@ Running this (with ```cargo run -p schotter1```), we see one square at the top l
 
 To make a grid of squares, we use a couple of nested loops. We'll also create a new draw function ```cdraw``` (for cell draw) with the coordinate system centered on the square we are drawing.
 
-```
+```rust
 for y in 0..ROWS {
     for x in 0..COLS {
         let cdraw = gdraw.x_y(x as f32, y as f32);
@@ -175,11 +178,11 @@ for y in 0..ROWS {
 }
 ```
 
-![](images/schotter1a.png)
+![schotter1a](images/schotter1a.png)
 
 The final step is to randomly move and rotate each square. We want the top to be affected less than the bottom, so we first compute a factor between 0 and 1 based on the vertical distance from the top. Then we call the Nannou random_range() function three times to get the x offset, the y offset, and the rotation. The offsets are between -0.5 and 0.5 to get a possible range of one unit. The rotation is between -π/4 and π/4 radians (-45° and 45°) since squares have four-fold rotational symmetry. Then we add these in the rect() call.
 
-```
+```rust
 let factor = y as f32 / ROWS as f32;
 let x_offset = factor * random_range(-0.5, 0.5);
 let y_offset = factor * random_range(-0.5, 0.5);
@@ -196,6 +199,6 @@ cdraw.rect()
 
 And we're done! The result is, of course, different from what Georg Rees got; indeed it will be different each time the program is run. That's the fun of generative art.
 
-![](images/schotter1b.png)
+![schotter1b](images/schotter1b.png)
 
 Next tutorial: [Schotter2](schotter2.md)

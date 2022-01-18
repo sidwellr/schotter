@@ -67,13 +67,9 @@ The first line of view assigns the application's Draw interface to the variable 
 
 The last "draw.to_frame" line is used just like this in most every Nannou program. It takes all the draw operations and actually renders them to the frame so they will be displayed.
 
-The template is a great starting point, and running it shows we have everything set up correctly. Now we'll change it to draw something that looks like Schotter. First, we'll set the loop mode. By default, the view function gets called repeatedly, allowing animations. But we aren't animating; we just want it to run one time. We can set this in main by adding an additional item to the sketch, like this:
+The template is a great starting point, and running it shows we have everything set up correctly. Now we'll change it to draw something that looks like Schotter. 
 
-```
-nannou::sketch(view).size(WIDTH, HEIGHT).loop_mode(LoopMode::loop_once()).run()
-```
-
-In the view function, the "draw.background" line is useful, but let's change "PLUM" to "SNOW" to make a white background (but not completely white). 
+First, in the view function, the "draw.background" line is useful, but let's change "PLUM" to "SNOW" to make a white background (but not completely white). 
 
 ```
 draw.background().color(SNOW);
@@ -102,6 +98,12 @@ Once we know the number of rows and columns of squares and the size of each squa
 
 ```
   nannou::sketch(view).size(WIDTH, HEIGHT).run()
+```
+
+We'll also set the loop mode. By default, the view function gets called repeatedly, allowing animations. But we aren't animating; we just want it to run one time. We can set this in main by adding an additional item to the sketch, like this:
+
+```
+nannou::sketch(view).size(WIDTH, HEIGHT).loop_mode(LoopMode::loop_once()).run()
 ```
 
 This uses the Rust builder pattern, where a structure is built using functions that are chained together. It is especially useful for specifying optional parameters, like the size of the sketch window here. Size is the only thing you can specify for sketch (besides run, which actually starts the sketch), but some constructs have a lot more. Draw has several dozen!

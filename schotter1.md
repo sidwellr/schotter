@@ -73,7 +73,17 @@ The template is a great starting point, and running it shows we have everything 
 nannou::sketch(view).size(WIDTH, HEIGHT).loop_mode(LoopMode::loop_once()).run()
 ```
 
-In the view function, the "draw.background" line is useful, but let's change "PLUM" to "SNOW" to make a white background (but not completely white). We don't need a circle, so let's delete the "draw.ellipse" line; we'll code the schotter logic in its place.
+In the view function, the "draw.background" line is useful, but let's change "PLUM" to "SNOW" to make a white background (but not completely white). 
+
+```
+draw.background().color(SNOW);
+```
+
+We don't need a circle, so let's delete the "draw.ellipse" line; we'll code the schotter logic in its place.
+
+```diff
+-draw.ellipse().color(STEELBLUE);
+```
 
 Before we start coding the schotter logic, we need to set up the coordinate system we want to use. The Draw interface we get from the App will have the origin in the center with a scale of one pixel per unit, positive *x* to the right, and positive *y* to the top. We need to rescale that coordinate system to have *size* pixels per unit (*size* is the length of each side of the squares), move the origin to where we want to put the top left square, and flip *y* so positive values go down. Now is the time to do that!
 

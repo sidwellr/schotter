@@ -50,12 +50,6 @@ We'll be coding *Schotter* four different ways, each building on the previous ve
 
 [Schotter2](schotter2.md): Change the code to a Nannou "app" with persistent data and simple keyboard commands to adjust some parameters.
 
-[Schotter3](schotter3.md): Add a control panel using Conrod to make it easier to adjust parameters on the fly.
-
-[Schotter4](schotter4.md): Animate the squares, so they move from the starting grid to their displaced positions, and from there to new positions.
-
-When I first created this tutorial, Conrod was the only Graphical User Interface (GUI) that was integrated with Nannou and thus the logical choice for building the control panel used in schotter3 and schotter4. Since that time, Alexandru Ene added a Nannou integration for egui, another immediate mode GUI which is very easy to use. So I added an alternative path using egui instead of Conrod:
-
 [Schotter3a](schotter3a.md): Add a control panel using egui to make it easier to adjust parameters on the fly.
 
 [Schotter4a](schotter4a.md): Animate the squares, so they move from the starting grid to their displaced positions, and from there to new positions (egui version).

@@ -7,5 +7,5 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-nannou = "0.18"
-nannou_egui = "0.5"
+nannou = "0.19"
+nannou_egui = "0.19"

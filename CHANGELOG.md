@@ -1,5 +1,8 @@
 # Schotter Change Log
 
+#### 11 July 2026
+Update to Nannou version 0.19. No code changes were needed except that Conrod is no longer supported with this version, so removed the obsolete Conrod versions. Renamed schotter3a and schotter4a to schotter3 and schotter4.
+
 #### 30 September 2022
 Changed Cargo.toml to use low optimization for our programs, but high optimization for the packages is uses (like Nannou).
 

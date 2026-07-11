@@ -50,9 +50,9 @@ We'll be coding *Schotter* four different ways, each building on the previous ve
 
 [Schotter2](schotter2.md): Change the code to a Nannou "app" with persistent data and simple keyboard commands to adjust some parameters.
 
-[Schotter3a](schotter3a.md): Add a control panel using egui to make it easier to adjust parameters on the fly.
+[Schotter3](schotter3.md): Add a control panel using egui to make it easier to adjust parameters on the fly.
 
-[Schotter4a](schotter4a.md): Animate the squares, so they move from the starting grid to their displaced positions, and from there to new positions (egui version).
+[Schotter4](schotter4.md): Animate the squares, so they move from the starting grid to their displaced positions, and from there to new positions (egui version).
 
 
 I may add some variations later; after all, that's what creative coding is all about! They may or may not be accompanied by full tutorials. But that's it for now.

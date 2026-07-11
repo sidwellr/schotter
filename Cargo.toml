@@ -2,8 +2,8 @@
 members=[
     "schotter1",
     "schotter2",
-    "schotter3a",
-    "schotter4a",
+    "schotter3",
+    "schotter4",
 ]
 resolver="2"
 

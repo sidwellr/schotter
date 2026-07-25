@@ -1,10 +1,13 @@
 # Schotter Change Log
 
+#### 24 July 2026
+Update to nannou version 0.20.0. This was a major update, rewriting nannou to use the Bevy game engine, and required a lot of changes to the code, which are itemized [here](changes_for_0.20.md).
+
 #### 11 July 2026
-Update to Nannou version 0.19. No code changes were needed except that Conrod is no longer supported with this version, so removed the obsolete Conrod versions. Renamed schotter3a and schotter4a to schotter3 and schotter4.
+Update to nannou version 0.19. No code changes were needed except that Conrod is no longer supported with this version, so removed the obsolete Conrod versions. Renamed schotter3a and schotter4a to schotter3 and schotter4.
 
 #### 30 September 2022
-Changed Cargo.toml to use low optimization for our programs, but high optimization for the packages is uses (like Nannou).
+Changed Cargo.toml to use low optimization for our programs, but high optimization for the packages is uses (like nannou).
 
 #### 20 December 2021
 Added schotter3a and schotter4a, alternate implementations of schotter3 and schotter4 that use egui instead of Conrod to implement the control panel.
@@ -13,12 +16,12 @@ Added schotter3a and schotter4a, alternate implementations of schotter3 and scho
 I just discovered that you can set the loop mode in the app builder. That seems more logical than setting it in view() or model(), so I changed the code to use that method.
 
 #### 21 November 2021
-Update to Nannou version 0.18. The `nannou::ui` module was refactored to a `nannou_conrod` crate. This required changing the code for setting up the control panel (though the actual widget code is the same).
+Update to nannou version 0.18. The `nannou::ui` module was refactored to a `nannou_conrod` crate. This required changing the code for setting up the control panel (though the actual widget code is the same).
 
 I also updated the Rust edition to "2021" just to get the latest. No code changes were required for this.
 
 #### 22 June 2021
-Update to Nannou version 0.17. The random number generator gen_range function changed from using two arguments for the range to using a range. For example, `rng.gen_range(-0.5, 0.5)` changed to `rng.gen_range(-0.5..0.5)`.
+Update to nannou version 0.17. The random number generator gen_range function changed from using two arguments for the range to using a range. For example, `rng.gen_range(-0.5, 0.5)` changed to `rng.gen_range(-0.5..0.5)`.
 
 #### 1 June 2021
 Editorial updates to improve descriptions and make the code and descriptions match each other.

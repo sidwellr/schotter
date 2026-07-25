@@ -1,10 +1,12 @@
-# Schotter4a: Animate the squares (egui version)
+# Schotter4: Animate the squares
 
-For schotter4a, we'll animate the squares, making them move and rotate over time. We want the changes to be smooth, so we need to move and rotate the squares just a bit each iteration. (This version is the same as schotter4 except continuing schotter3a using egui for the control panel.)
+For schotter4, we'll animate the squares, making them move and rotate over time. We want the changes to be smooth, so we need to move and rotate the squares just a bit each iteration.
 
 There are several ways to do the animation; here is the strategy we'll use here: We'll keep the existing fields of the Stone struct (x, y, x_offset, y_offset, and rotation) to mean the current state of the stone. The view() function can then remain exactly the same. To animate the squares, we'll add some velocity fields: x_velocity, y_velocity, and rot_velocity, and add the values of these fields to x_offset, y_offset, and rotation in the update function to move and rotate the square. We'll also add a counter named cycles to count down the number of times to use these velocity values; we'll change them when it reaches 0.
 
-So here's the augmented Stone struct:
+As before, we create a new project in our Rust workspace with the command `cargo new schotter4`, and add the same nannou dependency as schotter3: `nannou = { workspace = true, features = ["egui"] }`. Then copy the schotter3 main.rs file to schotter4.
+
+We need to augment the Stone struct with the new fields:
 
 ```
 struct Stone {
@@ -47,18 +49,19 @@ impl Stone {
 }
 ```
 
-We don't need to change the Model struct at all since it just keeps a vector of Stones. But we do need to change the loop mode. Since we want the main loop to iterate repeatedly for an animation, we change ```wait()``` to ```refresh_sync()```. This will make Nannou synchronize running the update/view loop with the monitor's refresh rate (typically 1/60 second).
+We don't need to change the Model struct at all since it just keeps a vector of Stones. But we do need to change the update mode. Since we want the main loop to iterate repeatedly for an animation, we change `wait()` to `Continuous`. This will make nannou run the loop continuously (this is the default, so we could just delete the line).
 
 ```
-nannou::app(model).update(update).loop_mode(LoopMode::refresh_sync()).run()
+app.set_update_mode(UpdateMode::Continuous);
 ```
 
-The main changes to implement the animation are to the update() function. We keep the main for loop ```for stone in &mut model.gravel```, but only want to randomize the stone when stone.cycles is 0. Rather than setting the offsets and rotation directly, we compute a new random "target": new_x, new_y, and new_rot, as well as a random number of cycles to reach it: new_cycles. We then compute the velocity values by subtracting the current from the new and dividing by the number of cycles.
+The main changes to implement the animation are to the update() function. We keep the main for loop `for stone in &mut model.gravel`, but only want to randomize the stone when stone.cycles is 0. Rather than setting the offsets and rotation directly, we compute a new random "target": new_x, new_y, and new_rot, as well as a random number of cycles to reach it: new_cycles. We then compute the velocity values by subtracting the current from the new and dividing by the number of cycles.
 
 If stone.cycles is greater than 0, we just add the velocity values to the current values to move the square towards its target and decrement cycles by 1. Here is the updated update() function:
 
 ```
 fn update(_app: &App, model: &mut Model, _update: Update) {
+    update_ui(app, model);
     let mut rng = StdRng::seed_from_u64(model.random_seed);
     for stone in &mut model.gravel {
         if stone.cycles == 0 {
@@ -89,7 +92,7 @@ When we compile and run this, it starts out fine; the squares move gradually to 
 
 When I first coded this, I puzzled for awhile why it didn't produce random results. So kudos if you see the problem! Clicking Randomize makes the squares move to a new configuration, but still not very random. The problem is subtle. Remember back in schotter2 when we added a seeded random number generator to give consistent results each time through the loop? We still start each iteration of update() with the same seed, so get the same sequence of random numbers each time. It works fine the first time, when all of the cycles values are 0. But since cycles will then be different for each square, only a few will be 0 on subsequent iterations, so their randomness is greatly reduced.
 
-Now that we are animating it, we don't want to repeat the random numbers. One way to fix this is to add rng, our seeded random number generator, to the model, initializing it with the seed in the model() function, and reinitializing it whenever we press 'R' or click Randomize. But it is probably easier just to abandon the seeded random number generator and use the Nannou random_range() function to generate them. Let's try that, replacing the four occurrences of ```rng.gen_range()``` with ```random_range()``` (also replacing the single range with two arguments):
+Now that we are animating it, we don't want to repeat the random numbers. One way to fix this is to add rng, our seeded random number generator, to the model, initializing it with the seed in the model() function, and reinitializing it whenever we press 'R' or click Randomize. But it is probably easier just to abandon the seeded random number generator and use the nannou random_range() function to generate them. Let's try that, replacing the four occurrences of `rng.random_range()` with `random_range()` (also replacing the single range with two arguments):
 
 ```
   let new_x = disp_factor * random_range(-0.5, 0.5);
@@ -104,7 +107,7 @@ Of course, the Randomize button now has no effect at all since we aren't using t
 
 Well, when we click Randomize the target square positions would be different from the positions if we hadn't clicked Randomize. But they are still random, so it isn't a difference we would be able to see. Put another way, if we just looked at the main window and someone else controlled the control panel without us knowing what they did, we wouldn't be able to tell when they click Randomize. Changing the sliders would have a noticable effect after a few seconds, but not clicking Randomize.
 
-So we no longer need the seeded RNG or the Randomize button. So let's clean up our code. Starting at the top, we first delete the two ```use nannou::rand``` lines since we no longer need to use that library. Then we delete the randomize, seed_label, and seed_text widgets from the widget_ids! macro. Struct Stone doesn't change, but we can delete random_seed from the model and the model() function (in two places). In update() we delete the ```let mut rng =``` line. In key_pressed(), we delete the ```Key::R``` block. Finally, in ui_event() we delete the ui.horizontal block with the Randomize button, seed widgets.
+So we no longer need the seeded RNG or the Randomize button. So let's clean up our code. Starting at the top, we first delete the two `use nannou::rand` lines since we no longer need to use that library. Then we delete random_seed from the model and the model() function (in two places). In update() we delete the `let mut rng =` line. In key_pressed(), we delete the `KeyCode::KeyR` block. Finally, in update_ui() we delete the ui.horizontal block with the Randomize button and seed widgets.
 
 Now compiling gives no warnings, and running the program works as we envisioned. Let's make some improvements. Right now, all of the squares (except for the top row) are in constant motion. Let's calm it down a bit by making the squares rest occasionally. We can stop a square from moving by setting the velocity values to 0. We'll do this randomly by adding the following code:
 
@@ -121,14 +124,14 @@ if stone.cycles == 0 {
 
 A simple change, but I think it looks nicer when not all of the squares are moving at once. Of course, you may have a different opinion! And my opinion will change from time to time. So let's add a control to specify how often squares will be still. Instead of using random(), which just randomly returns true or false with a 50% chance, we'll use random_f32(), which returns a random value between 0 and 1, and compare that to a probability we will set with a slider.
 
-First, we need to add a variable for this to Model. We'll call it "motion", and add it to the struct Model (I put ```motion: f32,``` between rot_adj and gravel), add a line ```let motion = 0.5;``` to the model() function, and include ```motion,``` in the correct place in our assignment to the_model. Then in update() we change ```if random()``` to ```if random_f32() > model.motion```.
+First, we need to add a variable for this to Model. We'll call it "motion", and add it to the struct Model (I put `motion: f32,` between rot_adj and gravel), add a line `let motion = 0.5;` to the model() function, and include `motion,` in the correct place in the model return value. Then in update() we change `if random()` to `if random_f32() > model.motion`.
 
 Now we add the slider (and a label for it). There is conveniently a space in the control panel since we deleted the Randomize button. Following the pattern we used in schotter3, we add a new slider for Motion.
 
 ```
 fn update_ui(model: &mut Model) {
-    let ctx = model.ui.begin_frame();
-    egui::Window::new("Schotter Control Panel").collapsible(false).show(&ctx, |ui| {
+    let ctx = app.egui_for_window(model.main_window);
+    egui::Window::new("Schotter Control Panel").show(&ctx, |ui| {
         ui.add(egui::Slider::new(&mut model.disp_adj, 0.0..=5.0).text("Displacement"));
         ui.add(egui::Slider::new(&mut model.rot_adj, 0.0..=5.0).text("Rotation"));
         ui.add(egui::Slider::new(&mut model.motion, 0.0..=1.0).text("Motion"));
@@ -142,14 +145,14 @@ Now we can adjust the behavior to our liking. Setting Motion to 0 (no motion) st
 
 That image was captured by pressing 'S', which saves the frame to the file "schotter4.png" in the directory the program was started from. But it only saves one frame; how can we save a clip from the animation? Nannou doesn't provide a method for video capture, so instead we need to save a sequence of frames and use another program to generate a video from those frames. Let's implement this, using 'R' for "record" to both start and stop the recording.
 
-In order to treat the sequence of images as a single thing, let's create a directory to store them in. Since Nannou doesn't provide access to a file selection dialog, we'll create a directory named "schotter4_frames" in the directory the program was started from. The image files themselves will be named "schotter####.png" where #### starts with 0001 and increases with each image. This convention is easy for video production programs to read.
+In order to treat the sequence of images as a single thing, let's create a directory to store them in. Since nannou doesn't provide access to a file selection dialog, we'll create a directory named "schotter4_frames" in the directory the program was started from. The image files themselves will be named "schotter####.png" where #### starts with 0001 and increases with each image. This convention is easy for video production programs to read.
 
 We'll need to add three new items to the model:
 * frames_dir: the name of the directory where the frames will be stored,
 * cur_frame: an integer containing the current frame number to use in the file name, and
 * recording: a boolean that is true if we are recording and false if not.
 
-So we add three lines to ```struct Model```:
+So we add three lines to `struct Model`:
 
 ```
 frames_dir: String,
@@ -165,7 +168,7 @@ let recording = false;
 let cur_frame = 0;
 ```
 
-Then we put these in the appropriate place in the assignment to ```the_model```.
+Then we put these in the appropriate place in the assignment to the return value.
 
 In order to create the directory, we need to use the standard fs package. And we don't want to give an error if the directory already exists; to check for that we need to use io::ErrorKind. So we add these lines to the beginning of the program:
 
@@ -177,7 +180,7 @@ use std::io::ErrorKind;
 When the 'R' key is pressed, we first check to see if we are currently recording; if so we stop. Otherwise, we create the directory using the above code and initialize recording. Here is the code we add to key_pressed():
 
 ```
-Key::R => {
+KeyCode::KeyR => {
     if model.recording {
         model.recording = false;
     } else {
@@ -192,7 +195,7 @@ Key::R => {
 }
 ```
 
-The ```fs::create_dir()``` function will create the directory and return a ```Result```, which is either ```()``` if it worked or an ```Error``` if there was a problem. The ```unwrap_or_else()``` will unwrap the ```Result``` and, if there was an error, process the error. Without this, an error would cause a panic, which is what we want if the error was unexpected but if the directory already exists we want to ignore it. So we look at the error kind and panic only if it isn't ```AlreadyExists```.
+The `fs::create_dir()` function will create the directory and return a `Result`, which is either `()` if it worked or an `Error` if there was a problem. The `unwrap_or_else()` will unwrap the `Result` and, if there was an error, process the error. Without this, an error would cause a panic, which is what we want if the error was unexpected but if the directory already exists we want to ignore it. So we look at the error kind and panic only if it isn't `AlreadyExists`.
 
 Now we have the infrastructure needed to record a frame sequence; we just need to add code to do the actual recording. Since it needs to be done for each frame, we add it to update(), after the for loop.
 
@@ -210,7 +213,7 @@ Then we copy the Key::S code from key_pressed() and change it to use the right f
 ```
 match app.window(model.main_window) {
     Some(window) => {
-        window.capture_frame(filename);
+        window.save_screenshot(filename);
     }
     None => {}
 }
@@ -218,7 +221,7 @@ match app.window(model.main_window) {
 
 Since update() now uses the "app" parameter, we need to remove the underscore from the parameter in the header. And we only capture frames if we are recording. But there are two subtle issues we need to incorporate:
 
-* The Nannou loop rate is 60 times per second, but the typical video frame rate is 30 frames per second. So we only want to capture every other frame. We do this by checking if app.elapsed_frames() is even.
+* The nannou loop rate is 60 times per second, but the typical video frame rate is 30 frames per second. So we only want to capture every other frame. We do this by checking if app.elapsed_frames() is even.
 * We only use four digit frame numbers, so need to stop recording when cur_frame exceeds 9999. (That's just over five and a half minutes at 30 frames/second. If we want a longer video, we need to use more digits.)
 
 Here is the final code segment added to update():

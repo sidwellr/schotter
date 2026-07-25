@@ -1,11 +1,9 @@
 [workspace]
-members=[
-    "schotter1",
-    "schotter2",
-    "schotter3",
-    "schotter4",
-]
-resolver="2"
+resolver="3"
+members=["schotter1", "schotter2", "schotter3", "schotter4"]
+
+[workspace.dependencies]
+nannou = "0.20"
 
 [profile.dev]
 opt-level = 1

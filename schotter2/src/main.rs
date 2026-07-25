@@ -1,6 +1,6 @@
 use nannou::prelude::*;
 use nannou::rand::rngs::StdRng;
-use nannou::rand::{Rng, SeedableRng};
+use nannou::rand::{RngExt, SeedableRng};
 
 const ROWS: u32 = 22;
 const COLS: u32 = 12;
@@ -11,7 +11,7 @@ const WIDTH: u32 = COLS * SIZE + 2 * MARGIN;
 const HEIGHT: u32 = ROWS * SIZE + 2 * MARGIN;
 
 fn main() {
-    nannou::app(model).update(update).loop_mode(LoopMode::wait()).run()
+    nannou::app(model).update(update).run()
 }
 
 struct Stone {
@@ -50,8 +50,7 @@ fn model(app: &App) -> Model {
                 .size(WIDTH, HEIGHT)
                 .view(view)
                 .key_pressed(key_pressed)
-                .build()
-                .unwrap();
+                .build();
 
     let random_seed = random_range(0, 1000000);
     let disp_adj = 1.0;
@@ -73,19 +72,20 @@ fn model(app: &App) -> Model {
     }
 }
 
-fn update(_app: &App, model: &mut Model, _update: Update) {
+fn update(_app: &App, model: &mut Model) {
     let mut rng = StdRng::seed_from_u64(model.random_seed);
     for stone in &mut model.gravel {
         let factor = stone.y / ROWS as f32;
         let disp_factor = factor * model.disp_adj;
         let rot_factor = factor * model.rot_adj;
-        stone.x_offset = disp_factor * rng.gen_range(-0.5..0.5);
-        stone.y_offset = disp_factor * rng.gen_range(-0.5..0.5);
-        stone.rotation = rot_factor * rng.gen_range(-PI / 4.0..PI / 4.0);
+        stone.x_offset = disp_factor * rng.random_range(-0.5..0.5);
+        stone.y_offset = disp_factor * rng.random_range(-0.5..0.5);
+        stone.rotation = rot_factor * rng.random_range(-PI / 4.0..PI / 4.0);
     }
 }
 
-fn view(app: &App, model: &Model, frame: Frame) {
+fn view(app: &App, model: &Model) {
+    app.set_update_mode(UpdateMode::wait());
     let draw = app.draw();
     let gdraw = draw.scale(SIZE as f32)
                     .scale_y(-1.0)
@@ -105,34 +105,35 @@ fn view(app: &App, model: &Model, frame: Frame) {
             .rotate(stone.rotation)
             ;
     }
-
-    draw.to_frame(app, &frame).unwrap();
 }
 
-fn key_pressed(app: &App, model: &mut Model, key: Key) {
+fn key_pressed(app: &App, model: &mut Model, key: KeyCode) {
     match key {
-        Key::R => {
+        KeyCode::KeyR => {
             model.random_seed = random_range(0, 1000000);
         }
-        Key::S => {
+        KeyCode::KeyS => {
             app.main_window()
-                .capture_frame(app.exe_name().unwrap() + ".png");
+                .save_screenshot(app.exe_name().unwrap() + ".png");
         }
-        Key::Up => {
+        KeyCode::ArrowUp => {
             model.disp_adj += 0.1;
         }
-        Key::Down => {
+        KeyCode::ArrowDown => {
             if model.disp_adj > 0.0 {
                 model.disp_adj -= 0.1;
             }
         }
-        Key::Right => {
+        KeyCode::ArrowRight => {
             model.rot_adj += 0.1;
         }
-        Key::Left => {
+        KeyCode::ArrowLeft => {
             if model.rot_adj > 0.0 {
                 model.rot_adj -= 0.1;
             }
+        }
+        KeyCode::Escape => {
+            app.quit();
         }
         _other_key => {}
     }

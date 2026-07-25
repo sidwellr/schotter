@@ -4,40 +4,29 @@ With schotter1, we made a very basic program that just generated a pattern, disp
 
 The goal of schotter2 is to add some parameters to schotter1 so we can try different patterns and make some design adjustments while the program is running. This make it much easier to find nice designs. For now, we will limit our interaction to key presses; we'll make a more convenient control panel in schotter3.
 
-Specifically, we want to implement the following commands by pressing the appropriate keys:
+Specifically, we will implement the following commands by pressing the appropriate keys:
 * R: randomize the pattern
 * S: save the current pattern as a PNG file with the name schotter2.png
 * up/down arrows: increase/decrease the square displacement
 * right/left arrows: increase/decrease the square rotation
 
-Doing this requires converting our Nannou sketch to a Nannou app, which can store persistent data used to generate designs. The process for doing this is easy, and described in the [Nannou Guide](https://guide.nannou.cc/tutorials/basics/sketch-vs-app.html#switching-from-sketch-to-app). We'll use a slightly different process that adds some flexibility.
+Doing this requires converting our nannou sketch to a nannou app, which can store persistent data used to generate designs. The process for doing this is easy, and described in the [Nannou Guide](https://guide.nannou.cc/tutorials/basics/sketch-vs-app.html#switching-from-sketch-to-app). We'll use a slightly different process that adds some flexibility.
 
-The first step is to create a new project in our Rust workspace using the same steps as for schotter1. Add "schotter2" to the members list in the workspace Cargo.toml file, which now looks like this:
+The first step is to create a new project in our Rust workspace using the same steps as for schotter1. First create the new project with the command `cargo new schotter2`, which will create the directory "schotter2" with a "src" subdirectory and the project Cargo.toml file. Add nannou as a dependency by adding `nannou = { workspace = true }` to the end of schotter2/Cargo.toml just as we did for schotter1/Cargo.toml.
 
-```
-[workspace]
+Now the process changes slightly. Instead of replacing the initial contents of schotter2/src/main.rs with a nannou template, copy the contents of schotter1/src/main.rs to it. Now compile and run the program with the command `cargo run -p schotter2`. It will work exactly the same as schotter1 did (since it is exactly the same code).
 
-members=[
-    "schotter1",
-    "schotter2",
-]
-```
-
-Then create the new project with the command ```cargo new schotter2```, which will create the directory "schotter2" with a "src" subdirectory and the project Cargo.toml file. Add Nannou as a dependency by adding ```nannou = "0.18"``` to the end of schotter2/Cargo.toml just as we did for schotter1/Cargo.toml. (Use the same version as before. All programs in a single workspace should use the same versions of the libraries.)
-
-Now the process changes slightly. Instead of replacing the initial contents of schotter2/src/main.rs with a Nannou template, copy the contents of schotter1/src/main.rs to it. Now compile and run the program with the command ```cargo run -p schotter2```. It will work exactly the same as schotter1 did (since it is exactly the same code). As before, press 'Esc' to exit.
-
-Now we switch schotter2 from a Nannou sketch to a Nannou app using the following steps:
+Now we switch schotter2 from a nannou sketch to a nannou app using the following steps:
 
 1. Change the single statement in function main().
 
 Old:
 ```
-nannou::sketch(view).size(WIDTH, HEIGHT).loop_mode(LoopMode::loop_once()).run()
+nannou::sketch(view).size(WIDTH, HEIGHT).run()
 ```
 New:
 ```
-nannou::app(model).update(update).loop_mode(LoopMode::loop_once()).run();
+nannou::app(model).update(update).run();
 ```
 
 2. Add a "Model" struct to contain the persistent data we will use. We can call it whatever we want, but we'll follow the convention and use "Model". It doesn't contain anything yet; we'll add fields to it shortly.
@@ -45,15 +34,15 @@ nannou::app(model).update(update).loop_mode(LoopMode::loop_once()).run();
 struct Model {}
 ```
 
-3. Create a "model" function for creating the model. It is used for other initial setup as well, such as setting the loop mode and creating the Nannou window. This function is the argument to the ```app(model)``` we added to function main(). Again, we can call it anything, but the convention is to use "model". It takes one parameter, the Nannou App, and returns a Model struct (empty at the moment).
+3. Create a "model" function for creating the model. This function is the argument `model` of the `app(model)` we added to function main(). Again, we can call it anything, but the convention is to use "model". It takes one parameter, the nannou App, and returns a Model struct (empty at the moment). This function also does any other needed initialization such as creating the window using `app.new_window()`, including specifying the "view" function which was specified in `sketch` function before.
+
 ```
 fn model(app: &App) -> Model {
     let _window = app.new_window()
                 .title(app.exe_name().unwrap())
                 .size(WIDTH, HEIGHT)
                 .view(view)
-                .build()
-                .unwrap();
+                .build();
     Model {}
 }
 ```
@@ -62,27 +51,28 @@ fn model(app: &App) -> Model {
 
 Old:
 ```
-fn view(app: &App, frame: Frame) {
+fn view(app: &App) {
 ```
 New:
 ```
-fn view(app: &App, _model: &Model, frame: Frame) {
+fn view(app: &App, _model: &Model) {
 ```
 
 5. Create an "update" function that is called in each iteration to update the data in the model. Right now, we have nothing to update, so the body is blank.
-```
-fn update(_app: &App, _model: &mut Model, _update: Update) {}
-```
-
-Our Nannou sketch is now an app! It's a good idea to compile and run it to make sure there aren't any typos or other errors. We didn't change any logic, so it will work just as before, but now we have the ability to add persistent data (in the model) and update that when we want to.
-
-Of course, if we are going to update things, we need to run the update/view loop more that once. So let's change the loop mode from `loop_once()` to `wait()`; this means to run the loop (the update and view functions) only after user input events. So as long as you don't touch the keyboard or mouse, the program will run the same as before.
 
 ```
-nannou::app(model).update(update).loop_mode(LoopMode::wait()).run()
+fn update(_app: &App, _model: &mut Model) {}
 ```
 
-But simply moving the mouse will randomize the square positions, and that's annoying. It's the reason we set the loop mode to loop_once in schotter1! To fix this, we need to exert more control over the random number generator; specifically, we need to control the seed it uses.
+Our nannou sketch is now an app! It's a good idea to compile and run it to make sure there aren't any typos or other errors. We didn't change any logic, so it will work just as before, but now we have the ability to add persistent data (in the model) and update that when we want to.
+
+Of course, if we are going to update things, we need to run the update/view loop more than once. Since nannou 0.20.0 is missing the `loop_once()` capability, the workaround we used in schotter1 is actually exactly what we need. But in the future we will need to remove `loop_once()` from the sketch or app statement and add this line to the beginning of `view`: 
+
+```
+app.set_update_mode(UpdateMode::wait());
+```
+
+But simply moving the mouse will randomize the square positions, and that's annoying. To fix this, we need to exert more control over the random number generator; specifically, we need to control the seed it uses.
 
 Random number generators (RNGs) compute a stream of numbers that are statistically random. The numbers aren't really random like flipping coins or rolling dice are, but they are often used to simulate such things so are very useful in programs like games and generative art. RNGs can be initialized with a "seed", which is basically a number to get it started. When re-initialized with the same seed value, a RNG will generate exactly the same sequence. This is just what we need! If we set the RNG seed to some value on each loop iteration before we use the random numbers, we will produce the same results.
 
@@ -103,12 +93,12 @@ Whenever we change the Model, we need to change the model function to initialize
     }
 ```
 
-The simple random number generator we used in schotter1 is included in the Nannou prelude, so we can use it directly. But to use the seedable RNG we need to add two more use statements to the beginning of the program:
+The simple random number generator we used in schotter1 is included in the nannou prelude, so we can use it directly. But to use the seedable RNG we need to add two more use statements to the beginning of the program:
 
 ```
 use nannou::prelude::*;
 use nannou::rand::rngs::StdRng;
-use nannou::rand::{Rng, SeedableRng};
+use nannou::rand::{RngExt, SeedableRng};
 ```
 
 Then, near the beginning of the view function where we set up the variables used in the function, we need to create a RNG from the seed, with this statement:
@@ -120,20 +110,20 @@ let mut rng = StdRng::seed_from_u64(model.random_seed);
 Note that rng must be mutable; generating a random number changes the internal state to prepare for generating the next one. We also need to remove the underscore in front of "_model" in the function declaration since we will be using the parameter (beginning a variable with an underscore tells Rust that we know we aren't using it so it doesn't need to warn us):
 
 ```
-fn view(app: &App, model: &Model, frame: Frame) {
+fn view(app: &App, model: &Model) {
 ```
 
-Finally, we replace the three calls to "random_range()" with "rng.gen_range()" so we get random numbers from our seeded RNG instead of the standard one. But the instead of two arguments specifying the range, rng.gen_range() takes a single range argument (this was a change in Nannou version 0.17.0). So we also need to change the ',' to '..':
+Finally, we replace the three calls to "random_range()" with "rng.random_range()" so we get random numbers from our seeded RNG instead of the standard one. But the instead of two arguments specifying the range, `rng.random_range()` takes a single range argument. So we also need to change the ',' to '..':
 
 ```
-let x_offset = factor * rng.gen_range(-0.5..0.5);
-let y_offset = factor * rng.gen_range(-0.5..0.5);
-let rotation = factor * rng.gen_range(-PI / 4.0..PI / 4.0);
+let x_offset = factor * rng.random_range(-0.5..0.5);
+let y_offset = factor * rng.random_range(-0.5..0.5);
+let rotation = factor * rng.random_range(-PI / 4.0..PI / 4.0);
 ```
 
 Finally, if we compile and run the program now it will work the same as schotter1. But now we can add new functionality.
 
-Let's start with by making the 'R' key randomize the pattern by changing random_seed to a new random value. We first need to register a function that is called when a key is pressed in the window by adding the builder function ```key_pressed(key_pressed)``` to our new_window() call in model. It now looks like this:
+Let's start with by making the 'R' key randomize the pattern by changing random_seed to a new random value. We first need to register a function that is called when a key is pressed in the window by adding the builder function `key_pressed(key_pressed)` to our new_window() call in model. It now looks like this:
 
 ```
 let _window = app.new_window()
@@ -141,16 +131,15 @@ let _window = app.new_window()
             .size(WIDTH, HEIGHT)
             .view(view)
             .key_pressed(key_pressed)
-            .build()
-            .unwrap();
+            .build();
 ```
 
 Then we add our key_pressed() function to the end of the program:
 
 ```
-fn key_pressed(_app: &App, model: &mut Model, key: Key) {
+fn key_pressed(_app: &App, model: &mut Model, key: KeyCode) {
     match key {
-        Key::R => {
+        KeyCode::KeyR => {
             model.random_seed = random_range(0, 1000000);
         }
         _other_key => {}
@@ -163,14 +152,14 @@ This function is called whenever we press a key. It matches on the key we presse
 When we find a pattern we like, it would be nice to be able to save the resulting image. Let's make 'S' do that. Nannou doesn't provide access to the file selection dialog, so it is hard to allow the user to choose a filename. Instead, we'll use use the program name (schotter2). To get this, key_pressed() will need access to the App, so we remove the underscore from the first argument, then add a case to our match statement for 'S':
 
 ```
-fn key_pressed(app: &App, model: &mut Model, key: Key) {
+fn key_pressed(app: &App, model: &mut Model, key: KeyCode) {
     match key {
-        Key::R => {
+        KeyCode::KeyR => {
             model.random_seed = random_range(0, 1000000);
         }
-        Key::S => {
+        KeyCode::KeyS => {
             app.main_window()
-                .capture_frame(app.exe_name().unwrap() + ".png");
+                .save_screenshot(app.exe_name().unwrap() + ".png");
         }
         _other_key => {}
     }
@@ -178,7 +167,15 @@ fn key_pressed(app: &App, model: &mut Model, key: Key) {
 }
 ```
 
-The ```capture_frame()``` function will capture the next frame just before it is drawn to the window and save it in a file. The ```app.exe_name()``` function returns the name of the executable that is currently running, which is "schotter2" now, but using this function means we don't need to change this line when we move on to "schotter3" and "schotter4". (We also used this function earlier to set the window title.)
+The `save_screenshot()` function will capture the next frame just before it is drawn to the window and save it in a file. The `app.exe_name()` function returns the name of the executable that is currently running, which is "schotter2" now, but using this function means we don't need to change this line when we move on to "schotter3" and "schotter4". (We also used this function earlier to set the window title.)
+
+Now that we can easily add new keypress functionality, let's add one more: press Esc to exit the program. This just requires adding one simple case to the match statement:
+
+```
+KeyCode::Escape => {
+    app.quit();
+}
+```
 
 Now we can add controls to fine tune the appearance of the result. There are lots of things we could do! We'll just make the arrow keys control how much the squares are displaced and rotated.
 
@@ -211,26 +208,26 @@ Now we need to incorporate the adjustment factors in the code in view():
 let factor = y as f32 / ROWS as f32;
 let disp_factor = factor * model.disp_adj;
 let rot_factor = factor * model.rot_adj;
-let x_offset = disp_factor * rng.gen_range(-0.5..0.5);
-let y_offset = disp_factor * rng.gen_range(-0.5..0.5);
-let rotation = rot_factor * rng.gen_range(-PI / 4.0..PI / 4.0);
+let x_offset = disp_factor * rng.random_range(-0.5..0.5);
+let y_offset = disp_factor * rng.random_range(-0.5..0.5);
+let rotation = rot_factor * rng.random_range(-PI / 4.0..PI / 4.0);
 ```
 
 Finally, we add cases to the key_pressed() function to change the new variables (notice the check to keep the values positive):
 
 ```
-Key::Up => {
+KeyCode::ArrowUp => {
     model.disp_adj += 0.1;
 }
-Key::Down => {
+KeyCode::ArrowDown => {
     if model.disp_adj > 0.0 {
         model.disp_adj -= 0.1;
     }
 }
-Key::Right => {
+KeyCode::ArrowRight => {
     model.rot_adj += 0.1;
 }
-Key::Left => {
+KeyCode::ArrowLeft => {
     if model.rot_adj > 0.0 {
         model.rot_adj -= 0.1;
     }
@@ -239,7 +236,7 @@ Key::Left => {
 
 Try running the program now. It starts out looking the same, but we can increase or decrease the displacement using the up and down arrows, and increase or decrease the rotation using the right and left arrows. The result still has randomness, but we have some control over the appearance.
 
-We should make one more change: We don't currently keep any information about the states of the squares between iterations. This is fine since we regenerate the squares from scratch on each iteration. But the Nannou App paradigm supports keeping state information in the model, and doing this will make it easier to make future changes, especially adding animation. We'll need to create the initial state in the model() function along with other setup. Then, on each iteration the update() function is called to update the state before calling the view() function to display it.
+We should make one more change: We don't currently keep any information about the states of the squares between iterations. This is fine since we regenerate the squares from scratch on each iteration. But the nannou App paradigm supports keeping state information in the model, and doing this will make it easier to make future changes, especially adding animation. We'll need to create the initial state in the model() function along with other setup. Then, on each iteration the update() function is called to update the state before calling the view() function to display it.
 
 The first thing we need to do is create a struct to hold information about individual squares. Since Schotter means "gravel", we'll call this struct Stone, and we'll include a new() function for it:
 
@@ -301,15 +298,15 @@ Model {
 The update() function now has some work to do! Instead of nested loops for x and y, we just iterate through the model.gravel vector which contains the state of each square and set the offset and rotation variables using code adapted from the view() function:
 
 ```
-fn update(_app: &App, model: &mut Model, _update: Update) {
+fn update(_app: &App, model: &mut Model) {
     let mut rng = StdRng::seed_from_u64(model.random_seed);
     for stone in &mut model.gravel {
         let factor = stone.y / ROWS as f32;
         let disp_factor = factor * model.disp_adj;
         let rot_factor = factor * model.rot_adj;
-        stone.x_offset = disp_factor * rng.gen_range(-0.5..0.5);
-        stone.y_offset = disp_factor * rng.gen_range(-0.5..0.5);
-        stone.rotation = rot_factor * rng.gen_range(-PI / 4.0..PI / 4.0);
+        stone.x_offset = disp_factor * rng.random_range(-0.5..0.5);
+        stone.y_offset = disp_factor * rng.random_range(-0.5..0.5);
+        stone.rotation = rot_factor * rng.random_range(-PI / 4.0..PI / 4.0);
     }
 }
 ```
@@ -334,4 +331,4 @@ That's all we'll do for this program. Now that you know the pattern for adding n
 
 ![](images/schotter2.png)
 
-Next tutorial: [Schotter3](schotter3.md) (Conrod version) or [Schotter3a](schotter3a.md) (egui version)
+Next tutorial: [Schotter3](schotter3.md)

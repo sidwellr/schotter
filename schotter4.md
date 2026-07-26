@@ -61,6 +61,9 @@ If stone.cycles is greater than 0, we just add the velocity values to the curren
 
 ```
 fn update(_app: &App, model: &mut Model, _update: Update) {
+    if app.window_count() < 2 {
+        app.quit();
+    }
     update_ui(app, model);
     let mut rng = StdRng::seed_from_u64(model.random_seed);
     for stone in &mut model.gravel {
@@ -68,10 +71,10 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
             let factor = stone.y / ROWS as f32;
             let disp_factor = factor * model.disp_adj;
             let rot_factor = factor * model.rot_adj;
-            let new_x = disp_factor * rng.gen_range(-0.5..0.5);
-            let new_y = disp_factor * rng.gen_range(-0.5..0.5);
-            let new_rot = rot_factor * rng.gen_range(-PI / 4.0..PI / 4.0);
-            let new_cycles = rng.gen_range(50..300);
+            let new_x = disp_factor * rng.random_range(-0.5..0.5);
+            let new_y = disp_factor * rng.random_range(-0.5..0.5);
+            let new_rot = rot_factor * rng.random_range(-PI / 4.0..PI / 4.0);
+            let new_cycles = rng.random_range(50..300);
             stone.x_velocity = (new_x - stone.x_offset) / new_cycles as f32;
             stone.y_velocity = (new_y - stone.y_offset) / new_cycles as f32;
             stone.rot_velocity = (new_rot - stone.rotation) / new_cycles as f32;
@@ -95,10 +98,10 @@ When I first coded this, I puzzled for awhile why it didn't produce random resul
 Now that we are animating it, we don't want to repeat the random numbers. One way to fix this is to add rng, our seeded random number generator, to the model, initializing it with the seed in the model() function, and reinitializing it whenever we press 'R' or click Randomize. But it is probably easier just to abandon the seeded random number generator and use the nannou random_range() function to generate them. Let's try that, replacing the four occurrences of `rng.random_range()` with `random_range()` (also replacing the single range with two arguments):
 
 ```
-  let new_x = disp_factor * random_range(-0.5, 0.5);
-  let new_y = disp_factor * random_range(-0.5, 0.5);
-  let new_rot = rot_factor * random_range(-PI / 4.0, PI / 4.0);
-  let new_cycles = random_range(50, 300);
+let new_x = disp_factor * random_range(-0.5, 0.5);
+let new_y = disp_factor * random_range(-0.5, 0.5);
+let new_rot = rot_factor * random_range(-PI / 4.0, PI / 4.0);
+let new_cycles = random_range(50, 300);
 ```
 
 Now compiling will give some warnings about the unused library Rng and the unused variable rng, but it does appear to work like we expect. The squares constantly rotate and move around, forming continually changing random patterns. It's fun to watch. Changing the sliders doesn't have an immediate effect like before; squares still move to their original targets. But the new targets will be controlled by the new settings, so after a few seconds the effects of the changes will be seen.
@@ -120,6 +123,7 @@ if stone.cycles == 0 {
         stone.cycles = random_range(50, 300);
     } else {
       // generate new velocity values as before
+    }
 ```
 
 A simple change, but I think it looks nicer when not all of the squares are moving at once. Of course, you may have a different opinion! And my opinion will change from time to time. So let's add a control to specify how often squares will be still. Instead of using random(), which just randomly returns true or false with a 50% chance, we'll use random_f32(), which returns a random value between 0 and 1, and compare that to a probability we will set with a slider.
@@ -131,7 +135,7 @@ Now we add the slider (and a label for it). There is conveniently a space in the
 ```
 fn update_ui(model: &mut Model) {
     let ctx = app.egui_for_window(model.main_window);
-    egui::Window::new("Schotter Control Panel").show(&ctx, |ui| {
+    egui::Window::new("Schotter Control Panel").collapsible(false).show(&ctx, |ui| {
         ui.add(egui::Slider::new(&mut model.disp_adj, 0.0..=5.0).text("Displacement"));
         ui.add(egui::Slider::new(&mut model.rot_adj, 0.0..=5.0).text("Rotation"));
         ui.add(egui::Slider::new(&mut model.motion, 0.0..=1.0).text("Motion"));
@@ -199,29 +203,22 @@ The `fs::create_dir()` function will create the directory and return a `Result`,
 
 Now we have the infrastructure needed to record a frame sequence; we just need to add code to do the actual recording. Since it needs to be done for each frame, we add it to update(), after the for loop.
 
-First we increment cur_frame and use it to create the filename:
+First we check if we are recording. If so, we increment cur_frame and use it to create the filename, then we save a screenshot to that file:
 
 ```
-model.cur_frame += 1;
-let filename = format!("{}/schotter{:>04}.png",
-    model.frames_dir,
-    model.cur_frame);
-```
-
-Then we copy the Key::S code from key_pressed() and change it to use the right filename:
-
-```
-match app.window(model.main_window) {
-    Some(window) => {
-        window.save_screenshot(filename);
-    }
-    None => {}
+if model.recording {
+    model.cur_frame += 1;
+    let filename = format!("{}/schotter{:>04}.png",
+        model.frames_dir,
+        model.cur_frame);
+    app.main_window().save_screenshot(filename);
 }
 ```
 
-Since update() now uses the "app" parameter, we need to remove the underscore from the parameter in the header. And we only capture frames if we are recording. But there are two subtle issues we need to incorporate:
+This is the basic recording code, but there are two subtle issues we need to incorporate:
 
 * The nannou loop rate is 60 times per second, but the typical video frame rate is 30 frames per second. So we only want to capture every other frame. We do this by checking if app.elapsed_frames() is even.
+
 * We only use four digit frame numbers, so need to stop recording when cur_frame exceeds 9999. (That's just over five and a half minutes at 30 frames/second. If we want a longer video, we need to use more digits.)
 
 Here is the final code segment added to update():
@@ -235,12 +232,7 @@ if model.recording && app.elapsed_frames() % 2 == 0 {
         let filename = format!("{}/schotter{:>04}.png",
             model.frames_dir,
             model.cur_frame);
-        match app.window(model.main_window) {
-            Some(window) => {
-                window.capture_frame(filename);
-            }
-            None => {}
-        }
+        app.main_window().save_screenshot(filename);
     }
 }
 ```

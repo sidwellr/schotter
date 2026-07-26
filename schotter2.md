@@ -2,7 +2,7 @@
 
 With schotter1, we made a very basic program that just generated a pattern, displayed it on the screen, and waited for us to close the program. To get a different pattern, we need to re-run the program. To tweak the design, we need to change the code and recompile it. This is basically what Georg Nees had to do! But modern technology lets us do better.
 
-The goal of schotter2 is to add some parameters to schotter1 so we can try different patterns and make some design adjustments while the program is running. This make it much easier to find nice designs. For now, we will limit our interaction to key presses; we'll make a more convenient control panel in schotter3.
+The goal of schotter2 is to add some parameters to schotter1 so we can try different patterns and make some design adjustments while the program is running. This makes it much easier to find nice designs. For now, we will limit our interaction to key presses; we'll make a more convenient control panel in schotter3.
 
 Specifically, we will implement the following commands by pressing the appropriate keys:
 * R: randomize the pattern
@@ -87,10 +87,10 @@ struct Model {
 Whenever we change the Model, we need to change the model function to initialize this value. We'll start it with a random integer between 0 and 1,000,000. So the last line of function model is changed to the following:
 
 ```
-    let random_seed = random_range(0, 1000000);
-    Model {
-        random_seed,
-    }
+let random_seed = random_range(0, 1000000);
+Model {
+    random_seed,
+}
 ```
 
 The simple random number generator we used in schotter1 is included in the nannou prelude, so we can use it directly. But to use the seedable RNG we need to add two more use statements to the beginning of the program:
@@ -101,7 +101,7 @@ use nannou::rand::rngs::StdRng;
 use nannou::rand::{RngExt, SeedableRng};
 ```
 
-Then, near the beginning of the view function where we set up the variables used in the function, we need to create a RNG from the seed, with this statement:
+Then we need to create a RNG from the seed in the view function, before the for loops, using this statement:
 
 ```
 let mut rng = StdRng::seed_from_u64(model.random_seed);

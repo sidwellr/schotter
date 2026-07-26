@@ -220,7 +220,7 @@ fn key_pressed(app: &App, model: &mut Model, key: KeyCode) {
 
 fn update_ui(app: &App, model: &mut Model) {
     let ctx = app.egui_for_window(model.ui_window);
-    egui::Window::new("Schotter Control Panel").show(&ctx, |ui| {
+    egui::Window::new("Schotter Control Panel").collapsible(false).show(&ctx, |ui| {
         ui.add(egui::Slider::new(&mut model.disp_adj, 0.0..=5.0).text("Displacement"));
         ui.add(egui::Slider::new(&mut model.rot_adj, 0.0..=5.0).text("Rotation"));
         ui.add(egui::Slider::new(&mut model.motion, 0.0..=1.0).text("Motion"));

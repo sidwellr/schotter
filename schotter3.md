@@ -9,21 +9,23 @@ As before, we create a new project in our Rust workspace with the command `cargo
 nannou = { workspace = true, features = ["egui"] }
 ```
 
+And copy our schotter2 main.rs code to schotter3 as our starting point. When compiling schotter3 for the first time, it will take a few minutes since Rust needs to compile the egui dependencies and recompile nannou and Bevy with the egui feature enabled.
+
 We still want to be able to save the generated image, and would like to do so without saving the control panel in the image, so we'll put the control panel in a second window. We start by creating that window.
 
 The main window is created in the model function by calling new_window. We just copy that invocation and make a few changes to create a second window:
 
 ```
-    let ui_window = app.new_window()
-                .always_on_top(true)
-                .title(app.exe_name().unwrap() + " controls")
-                .size(280, 130)
-                .view(ui_view)
-                .key_pressed(key_pressed)
-                .build();
+let ui_window = app.new_window()
+            .always_on_top(true)
+            .title(app.exe_name().unwrap() + " controls")
+            .size(280, 130)
+            .view(ui_view)
+            .key_pressed(key_pressed)
+            .build();
 ```
 
-Each window can have its own view and event functions. Here we set the view function to "ui_view". We use the same key_pressed function as for the main window so the keypresses we implemented in schotter2 will work even if the control panel window has the focus. The size is just a guess; we can adjust it later to make it fit the controls. Control panel development is often a process of trying some layout and then tweaking the placements and sizes to look right. We will need the window id when we create the User Interface, so we put it into a variable.
+Each window can have its own view and event functions. Here we set the view function to "ui_view". We use the same key_pressed function as for the main window so the keypresses we implemented in schotter2 will work even if the control panel window has the focus. The size is just a guess; we can adjust it later to make it fit the controls. Control panel development is often a process of trying some layout and then tweaking the placements and sizes to look right. We will need the window Entity when we create the User Interface, so we put it into a variable.
 
 Next, we need to create the new `ui_view` function (which does nothing; the control panel needs to be displayed from the update function so it can change the model variables):
 
@@ -48,20 +50,20 @@ Model {
 There is a problem with nannou version 0.20.0 that only allows egui controls to be displayed in first window that was created. The workaround is simple: make sure ui_window is created first. But to make sure the window where the schotter is displayed is the main window, we add `.primary()` to its new_window call. So here is the code to create the two windows:
 
 ```
-    let ui_window = app.new_window()
-                .always_on_top(true)
-                .title(app.exe_name().unwrap() + " controls")
-                .size(280, 130)
-                .view(ui_view)
-                .key_pressed(key_pressed)
-                .build();
-    let _window = app.new_window()
-                .primary()
-                .title(app.exe_name().unwrap())
-                .size(WIDTH, HEIGHT)
-                .view(view)
-                .key_pressed(key_pressed)
-                .build();
+let ui_window = app.new_window()
+            .always_on_top(true)
+            .title(app.exe_name().unwrap() + " controls")
+            .size(280, 130)
+            .view(ui_view)
+            .key_pressed(key_pressed)
+            .build();
+let _window = app.new_window()
+            .primary()
+            .title(app.exe_name().unwrap())
+            .size(WIDTH, HEIGHT)
+            .view(view)
+            .key_pressed(key_pressed)
+            .build();
 ```
 
 The egui library uses a GUI style called "immediate mode", where the GUI elements (called "widgets") are created and drawn as part of the update/draw loop, which works very well for programs like generative art and games. The alternative used by more traditional applications is "retained mode", where widgets are created during setup and maintained by the graphics library. This can be more efficient, but is also more complex since it requires synchronization between the data and widget states.
@@ -70,8 +72,8 @@ To begin, let's create a gui with a single "Randomize" button which will randomi
 
 ```
 fn update_ui(app: &App, model: &mut Model) {
-    let ctx = app.egui_for_window(model.window);
-    egui::Window::new("Schotter Control Panel").show(&ctx, |ui| {
+    let ctx = app.egui_for_window(model.ui_window);
+    egui::Window::new("Schotter Control Panel").collapsible(false).show(&ctx, |ui| {
         if ui.add(egui::Button::new("Randomize")).clicked() {
             model.random_seed = random_range(0, 1000000);
         }
@@ -79,7 +81,7 @@ fn update_ui(app: &App, model: &mut Model) {
 }
 ```
 
-The first line uses the `egui_for_window` function to get the "context" that we will use to add widgets. Then we create the control panel using `egui::Window::new("Schotter Control Panel")`. 
+The first line uses the `egui_for_window` function to get the egui "context" that we will use to add widgets. Then we create the control panel using `egui::Window::new("Schotter Control Panel")`. By default, egui panels have a button to collapse them to a tab, which is useful if the panel is in the same window as the sketch. But this isn't needed since we are using a separate window, so we include `collapsible(false)`.
 
 The next bit is some Rust magic, called a "closure". We won't get into the Rust details, but this is the syntax we need to build our control panel. The skeleton looks like this:
 
@@ -97,10 +99,10 @@ if ui.add(egui::Button::new("Randomize")).clicked() {
 }
 ```
 
-For our final step, we need to call `update_ui()` from `update()`; we'll add that as the very first line so we can get current values for all the variables:
+For our final step, we need to call `update_ui()` from `update()`; we'll add that as the very first line so we can get current values for all the variables. We will now need the app, so we remove the underscore before it.
 
 ```
-fn update(_app: &App, model: &mut Model) {
+fn update(app: &App, model: &mut Model) {
     update_ui(app, model);
 ```
 
@@ -125,7 +127,7 @@ By default, egui adds new widgets from top to bottom, so we just need to add two
 ```
 fn update_ui(app: &app, model: &mut Model) {
     let ctx = model.ui.begin_frame();
-    egui::Window::new("Schotter Control Panel").show(&ctx, |ui| {
+    egui::Window::new("Schotter Control Panel").collapsible(false).show(&ctx, |ui| {
         ui.add(egui::Slider::new(&mut model.disp_adj, 0.0..=5.0).text("Displacement"));
         ui.add(egui::Slider::new(&mut model.rot_adj, 0.0..=5.0).text("Rotation"));
         if ui.add(egui::Button::new("Randomize")).clicked() {
@@ -143,7 +145,7 @@ That was a lot of effort! The control panel code is as complicated as the genera
 
 Another advantage of a control panel that isn't quite so obvious is that is shows the values of the parameters used. Knowing them is essential if you ever need to replicate a particular output of the program. (Of course, that assumes that you record the values! Perhaps adding a way to save the parameters along with the image would be even better.)
 
-This is already long, but building on the potential need to replicate a particular output, we should show the current random seed value in the panel and allow it to be changed. We'll use another egui widget type for this: a DragValue. Since the seed value and the Randomize button are related, we'll put the DragValue widget to the right of the Randomize button. Widgets in egui are arranged vertically by default; to add a row of widgets, we use the `ui.horizontal()` method, which uses a closure just like the `show()` method:
+This is alrewait()ady long, but building on the potential need to replicate a particular output, we should show the current random seed value in the panel and allow it to be changed. We'll use another egui widget type for this: a DragValue. Since the seed value and the Randomize button are related, we'll put the DragValue widget to the right of the Randomize button. Widgets in egui are arranged vertically by default; to add a row of widgets, we use the `ui.horizontal()` method, which uses a closure just like the `show()` method:
 
 ```
 ui.horizontal(|ui| {

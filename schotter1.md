@@ -47,7 +47,7 @@ Function main is where Rust starts the program. Its single line says to create a
 
 Function view() implements the main logic of the sketch. For sketches, it has one parameter: an App which we assign to variable app. The App contains the nannou context, including the APIs and windows.
 
-The first line of view assigns the application's Draw interface to the variable "draw". The other three lines then use this Draw interface to perform drawing operations: setting the background to "PLUM" and drawing a "STEELBLUE" circle.
+The first line of view assigns the application's Draw interface to the variable "draw". The other three lines then use this Draw interface to perform drawing operations: setting the background to "PLUM" and drawing a "STEEL_BLUE" circle.
 
 The template is a great starting point, and running it shows we have everything set up correctly. Now we'll change it to draw something that looks like Schotter. 
 
@@ -86,7 +86,7 @@ In particular, Draw implements the following functions (among others) that we ca
 
 We won't need to rotate, so we'll ignore that one, but we do need to scale and translate to get the coordinate system we want. We can choose to translate then scale, or to scale then translate, but the translation values will be different. If we translate first, we use unscaled coordinates; if we scale first, we use scaled coordinates. Scaling first is usually the most logical, and is what we will do.
 
-We need to change from 1 pixel per unit to SIZE pixels per unit, so we use `scale(SIZE as f32)` (all these functions take floating point arguments). We also want to flip y so that positive values go down instead of up. We do this by scaling y by -1: `scale_y(-1.0)`. The scale is now what we want, but the origin is in the center, between squares, instead of the middle of the top left square, so we translate x by COLS/2 + 1/2 and y by ROWS/2 + 1/2 (the 1/2 is to move it from the corner to the center of the square). But we first need to convert the integers to floating point: `x_y(COLS as f32 / -2.0 + 0.5, ROWS as f32 / -2.0 + 0.5)`. We chain these together and assign the result to a new variable gdraw (for grid draw), like this:
+We need to change from 1 pixel per unit to SIZE pixels per unit, so we use `scale(SIZE as f32)` (all these functions take floating point arguments). We also want to flip y so that positive values go down instead of up. We do this by scaling y by -1: `scale_y(-1.0)`. The scale is now what we want, but the origin is in the center, between squares, instead of the middle of the top left square, so we translate x by COLS/2 + 1/2 and y by ROWS/2 + 1/2 (the 1/2 is to move it from the corner to the center of the square). But we first need to convert the integers to floating point: `x_y(COLS as f32 / -2.0 + 0.5, ROWS as f32 / -2.0 + 0.5)`. We chain these together and assign the result to a new variable gdraw (for grid draw), like this (these lines go at the beginning of the `view` function):
 
 ```
 let draw = app.draw();
